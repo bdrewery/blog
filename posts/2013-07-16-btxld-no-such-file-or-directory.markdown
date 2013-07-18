@@ -1,5 +1,5 @@
 Title: btxld: No such file or directory
-Tags: FreeBSD
+Tags: FreeBSD,tech
 
 For years I have ran into this error while running `make installworld`:
 

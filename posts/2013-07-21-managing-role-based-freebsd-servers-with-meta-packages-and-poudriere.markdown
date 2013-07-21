@@ -1,5 +1,5 @@
 Title: Managing Role Based FreeBSD servers using meta packages and Poudriere
-Tags: FreeBSD,ports,pkg,poudriere
+Tags: FreeBSD,ports,pkg,poudriere,tech
 
 To simplify server management I create "meta" packages in FreeBSD ports that can generate a package with only dependencies on other packages. This allows to me to just install this 1 package on the target server and have it pull in all of the packages that I want on there. , I assign each server specific "roles" and only install 1 or 2 packages per server depending on which roles they fulfill. The roles may be one of "dev", "web", "ports-dev", "jail", etc. This ensures that all servers fulfilling specific roles will always have the proper packages installed. For some applications, I use a dedicated jail with a meta package that only pulls in the required dependencies for that application to run. For instance, on a PHP application jail, the meta package may pull in nginx, php, eaccelerator, git, etc.
 

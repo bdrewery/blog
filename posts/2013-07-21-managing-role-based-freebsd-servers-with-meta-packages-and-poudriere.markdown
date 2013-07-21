@@ -57,11 +57,14 @@ VALID_CATEGORIES+=	local
 
 [Poudriere](https://fossil.etoilebsd.net/poudriere) is a tool to build and test packages for FreeBSD. There is a detailed guide on [creating pkgng repositories](https://fossil.etoilebsd.net/poudriere/doc/trunk/doc/pkgng_repos.wiki) on the poudriere site, so I will only cover it briefly here.
 
-Install poudriere, configure it, create a jail, then build the `local/dev-meta` package:
+Install poudriere on your build machine:
 
 <pre>
 build# make -C /usr/ports/ports-mgmt/poudriere install clean
-...
+</pre>
+
+Configure poudriere:
+<pre>
 build# cat >> /usr/local/etc/poudriere.conf
 BASEFS=/poudriere
 ZPOOL=tank
@@ -74,15 +77,25 @@ build# mkdir /usr/local/etc/poudriere.d
 build# cat >> /usr/local/etc/poudriere.d/make.conf
 WITH_PKGNG=	yes
 ^D
+</pre>
+
+Create a jail and import your existing _/usr/ports_ tree as *system*:
+<pre>
 # Create jail
 build# poudriere jail -c -j 83amd64 -v 8.3-RELEASE -a amd64
 ...
 # Add system's /usr/ports into poudriere
 build# poudriere ports -c -F -f none -M /usr/ports -p system
 ...
-# Pick options for ports
+</pre>
+
+Pick options for your meta package and dependencies:
+<pre>
 build# poudriere options -p system local/dev-meta
-# Build local/dev-meta package using system ports tree
+</pre>
+
+Now build the packages from the meta port using the *system* ports tree:
+<pre>
 build# poudriere bulk -j 83amd64 -p system local/dev-meta
 ====>> Creating the reference jail... done
 ====>> Mounting system devices for 83amd64-system

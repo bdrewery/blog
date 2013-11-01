@@ -112,7 +112,7 @@ Now build the packages from the meta port using the *system* ports tree:
 	====>> [83amd64-system] 53 packages built, 0 failures, 0 ignored, 0 skipped
 	====>> Logs: /poudriere/data/logs/bulk/83amd64-system/2013-07-21_14h14m27s
 
-The */poudriere/data/packages/83amd64-system* directory now contains the pkgng repository that needs to served. This can be done over NFS, Samba, HTTP, FTP, etc. It is best to serve the */poudriere/data/packages* directory and create symlinks of the ABI name to the target. The ABI is a pkgng feature defined as _OS:REL:ARCH:BITS_. For instance, this build would be _freebsd:8:x86:64_.
+The */poudriere/data/packages/83amd64-system* directory now contains the pkgng repository that needs to be served. This can be done over NFS, Samba, HTTP, FTP, etc. It is best to serve the */poudriere/data/packages* directory and create symlinks of the ABI name to the target. The ABI is a pkgng feature defined as _OS:REL:ARCH:BITS_. For instance, this build would be _freebsd:8:x86:64_.
 
 	build# ln -s 83amd64-system /poudriere/data/packages/freebsd:8:x86:64
 

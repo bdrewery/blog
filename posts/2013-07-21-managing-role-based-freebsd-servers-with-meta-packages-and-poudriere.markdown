@@ -5,7 +5,7 @@ To simplify server management I create "meta" packages in FreeBSD ports that can
 
 ## Packages are created from ports
 
-To create meta packages, just define a port that requires the actual ports that should be installed., then build packages for those meta ports.
+To create meta packages, define a port that requires the actual ports that should be installed. Then build packages for those meta ports.
 
 ### dev-meta port
 

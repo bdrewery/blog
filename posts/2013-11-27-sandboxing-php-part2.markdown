@@ -200,8 +200,11 @@ Start nginx with `service nginx start`.
 PHP-FPM will start a daemon to listen for local connections from nginx. All that needs to be done for PHP-FPM is to configure it to listen on a UNIX socket and to enable it on boot.
 
     # /usr/local/etc/php-fpm.conf
-    # Replace listen line with:
+    # Replace listen lines with:
     listen = /var/run/php-fpm-$pool.sock
+    listen.owner = www
+    listen.group = www
+    listen.mode = 0660
 
     # /etc/rc.conf
     php_fpm_enable=YES

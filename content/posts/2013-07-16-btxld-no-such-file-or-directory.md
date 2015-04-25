@@ -1,8 +1,10 @@
-Title: btxld: No such file or directory
-Tags: FreeBSD,tech
+title: "btxld: No such file or directory"
+date: 2013-07-16
+tags: [FreeBSD,tech]
 
 For years I have ran into this error while running `make installworld`:
 
+	:::console
 	# make installworld
 	[...]
 	===> sys/boot/i386/boot2 (install)

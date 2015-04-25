@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title -%}
+Bryan Drewery - {{ post.title }}
+{%- endblock title %}
+
+{% block main_body %}
+{{super()}}
+<div>
+  <div class="page-header">
+    <h2><a href="{{ url_for('post', path=post.path) }}">{{ post.title }}</a></h2>
+  </div>
+  <h3>{{ post.date }}</h3>
+  <ul class="list-inline">
+    {% for tag in post.tags|sort %}
+    <li><a href="{{ url_for('tag', tag=tag) }}">{{ tag }}</a></li>
+    {% endfor %}
+  </ul>
+  {{ post.html|safe }}
+</div>
+
+<div id="disqus_thread"></div>
+{% endblock %}
+
+{% block scripts %}
+{{super()}}
+<script type="text/javascript">
+    var disqus_shortname = 'shatow';
+    {# /* * * DON'T EDIT BELOW THIS LINE * * */ #}
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+{% endblock scripts %}

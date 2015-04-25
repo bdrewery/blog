@@ -1,0 +1,52 @@
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/fixes.html" as fixes %}
+
+{% block styles %}
+{{super()}}
+{# <link rel="stylesheet" href="{{url_for('.static', filename='blog.css')}}"></link> #}
+<link rel="stylesheet" href="{{ url_for('pygments_css') }}"></link>
+{% endblock %}
+
+{% block head %}
+{{super()}}
+{{fixes.ie8()}}
+<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+<link href="{{ url_for('recent_feed') }}"
+        rel="alternate"
+        title="Recent Changes"
+        type="application/atom+xml">
+{% endblock %}
+
+{% block title -%}
+Bryan Drewery
+{%- endblock title %}
+
+{% block content %}
+<div class="container">
+  <div class="header">
+    <h1 class="text-muted"><a href="{{ url_for('index') }}">Bryan Drewery</a></h1>
+  </div>
+  <div class="row">
+    <div class="col-md-2">
+      {%- include "nav_left.html" -%}
+    </div>
+    <div class="col-md-7">
+      {% block main_body %}
+      {% endblock %}
+    </div>
+    <div class="col-md-3">
+      {%- include "nav_right.html" -%}
+    </div>
+  </div>
+  <footer class="footer">
+    {% block footer %}
+    {% endblock footer %}
+    {%- include "footer.html" -%}
+  </footer>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{super()}}
+{# <script src="{{ url_for('static', filename='blog.js') }}"></script> #}
+{% endblock %}

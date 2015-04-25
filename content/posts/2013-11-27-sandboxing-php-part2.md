@@ -1,7 +1,9 @@
-Title: Sandboxing PHP part 2
-Tags: FreeBSD,PHP,nginx,jails,shared-hosting,security,tech
+title: Sandboxing PHP part 2
+date: 2013-11-27
+tags: [FreeBSD,PHP,nginx,jails,shared-hosting,security,tech]
 
 The best way to sandbox a web application is in a FreeBSD jail. Taking this a step further and placing a caching nginx reverse proxy in front of it can increase performance. The backend application server does not need to be on the same server as the internet-facing application server.
+<!--more-->
 
 A typical setup is:
 
@@ -57,6 +59,7 @@ The frontend server and backend application server can be combined if wanted:
 
 The frontend server is the only one that needs WAN access. It will only need nginx installed which will forward all requests to the backend application servers. A typical configuration for the reverse proxy is:
 
+    :::nginx
     # /usr/local/etc/nginx/vhosts/blog.example.com
 
     server {
@@ -85,35 +88,37 @@ Each application that needs to be setup will have its own jail and its own nginx
 
 First the jail IPs need to be added to the host. Add them to the interface's address list in _/etc/rc.conf_:
 
-    # /etc/rc.conf
     ipv4_addrs_em0="10.50.2.2/24 10.50.3.2/24"
 
 Then restart networking:
 
-    host# service netif restart && service routing restart
+    :::shell-session
+    root@host# service netif restart && service routing restart
 
 ### Jail setup
 
 The [sysutils/ezjail](http://www.freshports.org/sysutils/ezjail) port is the easiest utility for setting up the jail on FreeBSD. The jail needs to be created from the host and then populated with packages from inside of the jail. More details for this can be found on the [ezjail website](http://erdgeist.org/arts/software/ezjail/).
 
+    :::shell-session
     # Create the base jail
-    host# ezjail-admin update -i
+    root@host# ezjail-admin update -i
 
     # Create each application jail
-    host# ezjail-admin create -c zfs -r /tank/jails/blog blog 10.50.2.2
-    host# ezjail-admin create -c zfs -r /tank/jails/webmail webmail 10.50.3.2
+    root@host# ezjail-admin create -c zfs -r /tank/jails/blog blog 10.50.2.2
+    root@host# ezjail-admin create -c zfs -r /tank/jails/webmail webmail 10.50.3.2
 
     # Start the jails
-    host# ezjail-admin start blog
-    host# ezjail-admin start webmail
+    root@host# ezjail-admin start blog
+    root@host# ezjail-admin start webmail
 
     # Enable ezjail for next boot
-    host# echo ezjail_enable=YES >> /etc/rc.conf
+    root@host# echo ezjail_enable=YES >> /etc/rc.conf
 
-Next packages can be installed using [pkg](http://www.freebsd.org/doc/handbook/pkgng-intro.html) from the host system. This assumes that meta packages have been setup on the remote repository as described in [managing FreeBSD servers with meta packages](http://blog.shatow.net/post/2013-07-21-managing-role-based-freebsd-servers-with-meta-packages-and-poudriere.markdown). This also assumes that the meta package includes all needed dependencies including [www/nginx](http://www.freshports.org/www/nginx).
+Next packages can be installed using [pkg](http://www.freebsd.org/doc/handbook/pkgng-intro.html) from the host system. This assumes that meta packages have been setup on the remote repository as described in [managing FreeBSD servers with meta packages](/posts/2013-07-21-managing-role-based-freebsd-servers-with-meta-packages-and-poudriere). This also assumes that the meta package includes all needed dependencies including [www/nginx](http://www.freshports.org/www/nginx).
 
-    host# pkg -j blog install local/blog
-    host# pkg -j webmail install local/webmail
+    ::shell-session
+    root@host# pkg -j blog install local/blog
+    root@host# pkg -j webmail install local/webmail
 
 ### Application setup
 
@@ -125,6 +130,7 @@ This example assumes that [PHP-FPM](http://php-fpm.org/) will be used with a PHP
 
 nginx needs to be setup to use FastCGI.
 
+    :::nginx
     # /usr/local/etc/nginx/vhosts/blog.example.com
 
     server {
@@ -199,6 +205,7 @@ Start nginx with `service nginx start`.
 
 PHP-FPM will start a daemon to listen for local connections from nginx. All that needs to be done for PHP-FPM is to configure it to listen on a UNIX socket and to enable it on boot.
 
+    :::shell-session
     # /usr/local/etc/php-fpm.conf
     # Replace listen lines with:
     listen = /var/run/php-fpm-$pool.sock
@@ -219,7 +226,8 @@ Configure the application itself as needed.
 
 Occasionally the jail's package can be updated from the host:
 
-    host# pkg -j blog upgrade
+    :::shell-session
+    root@host# pkg -j blog upgrade
 
 ## Wrap up
 

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <title>Bryan Drewery - btxld: No such file or directory</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Bootstrap -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.2/css/bootstrap.min.css" rel="stylesheet" media="screen">
+
+<link rel="stylesheet" href="/static/pygments.css"></link>
+
+
+<!--[if lt IE 9]>
+      <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="//cdnjs.cloudflare.com/ajax/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+<link rel="shortcut icon" href="/static/favicon.ico">
+<link href="/recent.atom"
+        rel="alternate"
+        title="Recent Changes"
+        type="application/atom+xml">
+
+  </head>
+  <body>
+    
+    
+<div class="container">
+  <div class="header">
+    <h1 class="text-muted"><a href="/">Bryan Drewery</a></h1>
+  </div>
+  <div class="row">
+    <div class="col-md-2"><div class="panel panel-success">
+  <div class="panel-heading">
+    <h3 class="panel-title">Profile</h3>
+  </div>
+  <div class="panel-body">
+    <ul class="list-unstyled">
+      <li><a href="http://github.com/bdrewery">Github: @bdrewery</a></li>
+      <li><a href="http://twitter.com/bdrewery">Twitter: @bdrewery</a></li>
+      <li><a href="https://www.ohloh.net/accounts/bdrewery">Ohloh</a></li>
+    </ul>
+  </div>
+</div>
+<div class="panel panel-success">
+  <div class="panel-heading">
+    <h3 class="panel-title">Projects</h3>
+  </div>
+  <div class="panel-body">
+    <ul class="list-unstyled">
+      <li><a href="http://www.FreeBSD.org">FreeBSD committer</a></li>
+      <li><a href="https://www.freebsd.org/portmgr/">FreeBSD Portmgr</a></li>
+      <li><a href="http://github.com/freebsd/poudriere">poudriere</a></li>
+      <li><a href="http://github.com/freebsd/pkg">pkg</a></li>
+      <li><a href="http://github.com/bdrewery/zfstools">zfstools</a></li>
+      <li><a href="http://github.com/wraith/wraith">wraith IRC Bot</a></li>
+      <li><a href="http://github.com/bdrewery/bdlib">bdlib</a></li>
+      <li><a href="http://github.com/bdrewery/PyBorg">PyBorg IRC AI Bot</a></li>
+      <li><a href="http://github.com/freebsd/portupgrade">portupgrade</a></li>
+    </ul>
+  </div>
+</div>
+
+<span class="icon-large icon-rss"></span></div>
+    <div class="col-md-7">
+      
+
+      
+<div>
+  <div class="page-header">
+    <h2><a href="/posts/2013-07-16-btxld-no-such-file-or-directory/">btxld: No such file or directory</a></h2>
+  </div>
+  <h3>2013-07-16</h3>
+  <ul class="list-inline">
+    
+    <li><a href="/tag/FreeBSD/">FreeBSD</a></li>
+    
+    <li><a href="/tag/tech/">tech</a></li>
+    
+  </ul>
+  <p>For years I have ran into this error while running <code>make installworld</code>:</p>
+<div class="codehilite"><pre><span class="gp">#</span> make installworld
+<span class="go">[...]</span>
+<span class="go">===&gt; sys/boot/i386/boot2 (install)</span>
+<span class="go">cc -Os  -fno-guess-branch-probability  -fomit-frame-pointer  -fno-unit-at-a-time  -mno-align-long-strings  -mrtd  -mregparm=3  -DUSE_XREAD  -DUFS1_AND_UFS2  -DFLAGS=0x80  -DSIOPRT=0x3f8  -DSIOFMT=0x3  -DSIOSPD=9600  -I/usr/src/sys/boot/i386/boot2/../../common  -I/usr/src/sys/boot/i386/boot2/../btx/lib -I.  -Wall -Waggregate-return -Wbad-function-cast -Wcast-align  -Wmissing-declarations -Wmissing-prototypes -Wnested-externs  -Wpointer-arith -Wshadow -Wstrict-prototypes -Wwrite-strings  -Winline --param max-inline-insns-single=100   -march=i386 -ffreestanding -mpreferred-stack-boundary=2  -mno-mmx -mno-3dnow -mno-sse -mno-sse2 -mno-sse3 -msoft-float -m32 -std=gnu99    -S -o boot2.s.tmp /usr/src/sys/boot/i386/boot2/boot2.c</span>
+<span class="go">sed -e &#39;/align/d&#39; -e &#39;/nop/d&#39; &lt; boot2.s.tmp &gt; boot2.s</span>
+<span class="go">rm -f boot2.s.tmp</span>
+<span class="go">cc  -m32 -c boot2.s</span>
+<span class="go">ld -static -N --gc-sections -nostdlib -m elf_i386_fbsd -Ttext 0x2000 -o boot2.out /usr/obj/usr/src/sys/boot/i386/boot2/../btx/lib/crt0.o boot2.o sio.o</span>
+<span class="go">objcopy -S -O binary boot2.out boot2.bin</span>
+<span class="go">btxld -v -E 0x2000 -f bin -b /usr/obj/usr/src/sys/boot/i386/boot2/../btx/btx/btx -l boot2.ldr  -o boot2.ld -P 1 boot2.bin</span>
+<span class="go">btxld: No such file or directory</span>
+<span class="go">*** [boot2.ld] Error code 1</span>
+
+<span class="go">Stop in /usr/src/sys/boot/i386/boot2.</span>
+<span class="go">*** [realinstall] Error code 1</span>
+</pre></div>
+
+
+<p>This has <a href="http://lists.freebsd.org/pipermail/freebsd-current/2010-June/018292.html">come</a>, <a href="http://lists.freebsd.org/pipermail/freebsd-amd64/2006-September/008849.html">up</a>, <a href="http://lists.freebsd.org/pipermail/freebsd-amd64/2004-August/001906.html">before</a>.</p>
+<p>Most of the posts mention bad timestamps or incorrect date. I&rsquo;ve always been running ntpd though and running <code>make buildworld</code> before <code>make installworld</code>.</p>
+<p>My longterm workaround was to <code>make -C /usr/src/sys/boot/i386</code> before running <code>make installworld</code>.</p>
+<p>Recently this workaround stopped working for me. Looking into it more, I realized that I was applying custom patches to the src tree and then removing them before <code>make installworld</code>. This was changing timestamps of source files, causing a rebuild during <code>make installworld</code>. Changing my scripts to leave the patch applied until after everything is installed solves it.</p>
+</div>
+
+<div id="disqus_thread"></div>
+
+    </div>
+    <div class="col-md-3"><div class="panel panel-success">
+  <div class="panel-heading">
+    <h2 class="panel-title">Tags</h2>
+  </div>
+  <div class="panel-body">
+    
+    
+    <a href="/tag/FreeBSD/">FreeBSD</a>
+    
+    
+    <a href="/tag/jails/">jails</a>
+    
+    
+    <a href="/tag/nginx/">nginx</a>
+    
+    
+    <a href="/tag/PHP/">PHP</a>
+    
+    
+    <a href="/tag/pkg/">pkg</a>
+    
+    
+    <a href="/tag/ports/">ports</a>
+    
+    
+    <a href="/tag/poudriere/">poudriere</a>
+    
+    
+    <a href="/tag/security/">security</a>
+    
+    
+    <a href="/tag/shared-hosting/">shared-hosting</a>
+    
+    
+    <a href="/tag/tech/">tech</a>
+    
+  </div>
+</div>
+
+<ul class="list-unstyled">
+  
+  <li>
+    2013
+    <ul>
+      
+      <li>
+        11-27 - <a href="/posts/2013-11-27-sandboxing-php-part2/">Sandboxing PHP part 2</a>
+      </li>
+      
+      <li>
+        07-21 - <a href="/posts/2013-07-21-managing-role-based-freebsd-servers-with-meta-packages-and-poudriere/">Managing Role Based FreeBSD servers using meta packages and Poudriere</a>
+      </li>
+      
+      <li>
+        07-17 - <a href="/posts/2013-07-17-sandboxing-php-part1/">Sandboxing PHP part 1</a>
+      </li>
+      
+      <li>
+        07-16 - <a href="/posts/2013-07-16-btxld-no-such-file-or-directory/">btxld: No such file or directory</a>
+      </li>
+      
+    </ul>
+  </li>
+  
+</ul></div>
+  </div>
+  <footer class="footer">
+    
+    <p class="text-right">Copyright &copy; 2013-2015 Bryan Drewery</p></footer>
+</div>
+
+
+    
+
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.2/js/bootstrap.min.js"></script>
+
+
+<script type="text/javascript">
+    var disqus_shortname = 'shatow';
+    
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+  </body>
+</html>

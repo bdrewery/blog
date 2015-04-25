@@ -1,7 +1,9 @@
-Title: Managing Role Based FreeBSD servers using meta packages and Poudriere
-Tags: FreeBSD,ports,pkg,poudriere,tech
+title: Managing Role Based FreeBSD servers using meta packages and Poudriere
+date: 2013-07-21
+tags: [FreeBSD,ports,pkg,poudriere,tech]
 
 To simplify server management I create "meta" packages in FreeBSD ports that can generate a package with only dependencies on other packages. This allows to me to just install this 1 package on the target server and have it pull in all of the packages that I want on there. I assign each server specific "roles" and only install 1 or 2 packages per server depending on which roles they fulfill. The roles may be one of "dev", "web", "ports-dev", "jail", etc. This ensures that all servers fulfilling specific roles will always have the proper packages installed. For some applications, I use a dedicated jail with a meta package that only pulls in the required dependencies for that application to run. For instance, on a PHP application jail, the meta package may pull in nginx, php, eaccelerator, git, etc.
+<!--more-->
 
 ## Packages are created from ports
 
@@ -13,9 +15,10 @@ To create meta packages, define a port that requires the actual ports that shoul
 
 This meta port will install *git*, *cscope* and *vim*. Which dependencies those pull in do not matter here.
 
+	:::make
 	PORTNAME=	local-dev-meta
 	PORTVERSION=	20130719
-	CATEGORIES=     local
+	CATEGORIES=	local
 	MASTER_SITES=	# none
 	DISTFILES=	# none
 	EXTRACT_ONLY=	# none
@@ -45,6 +48,7 @@ Note the _RUN\_DEPENDS_ line is depending on *package names*, not *binary names*
 
 The _local_ category must be defined.
 
+	:::make
 	VALID_CATEGORIES+=	local
 
 ### Building packages with Poudriere
@@ -53,11 +57,13 @@ The _local_ category must be defined.
 
 Install poudriere on your build machine:
 
-	build# make -C /usr/ports/ports-mgmt/poudriere install clean
+	:::shell-session
+	root@build# make -C /usr/ports/ports-mgmt/poudriere install clean
 
 Configure poudriere:
 
-	build# cat >> /usr/local/etc/poudriere.conf
+	:::shell-session
+	root@build# cat >> /usr/local/etc/poudriere.conf
 	BASEFS=/poudriere
 	ZPOOL=tank
 	# Directory where the CCACHE_DIR is in the host
@@ -65,27 +71,30 @@ Configure poudriere:
 	# Directory to store distfiles on the host
 	DISTFILES_CACHE=/mnt/distfiles
 	^D
-	build# mkdir /usr/local/etc/poudriere.d
-	build# cat >> /usr/local/etc/poudriere.d/make.conf
+	root@build# mkdir /usr/local/etc/poudriere.d
+	root@build# cat >> /usr/local/etc/poudriere.d/make.conf
 	WITH_PKGNG=	yes
 	^D
 
 Create a jail and import your existing _/usr/ports_ tree as *system*:
 
+	:::shell-session
 	# Create jail
-	build# poudriere jail -c -j 83amd64 -v 8.3-RELEASE -a amd64
+	root@build# poudriere jail -c -j 83amd64 -v 8.3-RELEASE -a amd64
 	...
 	# Add system's /usr/ports into poudriere
-	build# poudriere ports -c -F -f none -M /usr/ports -p system
+	root@build# poudriere ports -c -F -f none -M /usr/ports -p system
 	...
 
 Pick options for your meta package and dependencies:
 
-	build# poudriere options -p system local/dev-meta
+	:::shell-session
+	root@build# poudriere options -p system local/dev-meta
 
 Now build the packages from the meta port using the *system* ports tree:
 
-	build# poudriere bulk -j 83amd64 -p system local/dev-meta
+	:::shell-session
+	root@build# poudriere bulk -j 83amd64 -p system local/dev-meta
 	====>> Creating the reference jail... done
 	====>> Mounting system devices for 83amd64-system
 	====>> Mounting ports/packages/distfiles
@@ -114,7 +123,8 @@ Now build the packages from the meta port using the *system* ports tree:
 
 The */poudriere/data/packages/83amd64-system* directory now contains the pkgng repository that needs to be served. This can be done over NFS, Samba, HTTP, FTP, etc. It is best to serve the */poudriere/data/packages* directory and create symlinks of the ABI name to the target. The ABI is a pkgng feature defined as _OS:REL:ARCH:BITS_. For instance, this build would be _freebsd:8:x86:64_.
 
-	build# ln -s 83amd64-system /poudriere/data/packages/freebsd:8:x86:64
+	:::shell-session
+	root@build# ln -s 83amd64-system /poudriere/data/packages/freebsd:8:x86:64
 
 The repository is now ready for use on the target servers.
 
@@ -125,9 +135,10 @@ On the target server, the appropriate meta packages just need to be installed no
 
 First bootstrap the system with pkg if needed.
 
-	dev# mkdir -p /usr/local/etc
-	dev# echo 'PACKAGESITE=http://packages.domain.com/${ABI}' > /usr/local/etc/pkg.conf
-	dev# pkg -v
+	:::shell-session
+	root@dev# mkdir -p /usr/local/etc
+	root@dev# echo 'PACKAGESITE=http://packages.domain.com/${ABI}' > /usr/local/etc/pkg.conf
+	root@dev# pkg -v
 	The package management tool is not yet installed on your system.
 	Do you want to fetch and install it now? [y/N]: y
 	Bootstrapping pkg please wait
@@ -139,7 +150,8 @@ First bootstrap the system with pkg if needed.
 
 Now the `local/dev-meta` package can be installed:
 
-	dev# pkg install local/dev-meta
+	:::shell-session
+	root@dev# pkg install local/dev-meta
 	digests.txz                                                        100%   57KB  57.1KB/s  57.1KB/s   00:00
 	packagesite.txz                                                    100%  323KB 323.3KB/s 323.3KB/s   00:00
 	Incremental update completed, 0 packages processed:
@@ -198,7 +210,8 @@ Now the `local/dev-meta` package can be installed:
 
 Only 2 packages were directly installed, so only those 2 show as non-automatic and will not be removed by `pkg autoremove`:
 
-	dev# pkg query -e '%a = 0' '%o
+	:::shell-session
+	root@dev# pkg query -e '%a = 0' '%o'
 	ports-mgmt/pkg
 	local/dev-meta
 

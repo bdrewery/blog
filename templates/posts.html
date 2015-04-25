@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block main_body %}
+{{super()}}
+<div>
+  {% with posts=posts  %}
+      {% include "_posts.html" %}
+  {% endwith %}
+</div>
+{% endblock main_body %}

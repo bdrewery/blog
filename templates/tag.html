@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block main_body %}
+{{super()}}
+<div>
+  <h2>Posts tagged <small><em>{{ tag }}</em></small></h2>
+  {% with posts=posts  %}
+      {% include "_posts.html" %}
+  {% endwith %}
+</div>
+{% endblock main_body %}

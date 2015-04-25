@@ -1,0 +1,57 @@
+<div itemscope itemtype="http://schema.org/Blog">
+  <ul itemprop="blogPosts" class="list-unstyled">
+    {% for post in posts %}
+    <li>
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">
+          <a itemprop="url" href="{{ url_for('post', path=post.path) }}">
+            <span itemprop="name">{{ post.title }}</span>
+          </a>
+          <small>|
+            <time datetime="{{ post.date }}">{{ post.date }}</time>
+          </small>
+        </h3>
+      </div>
+      {% if post.meta.tags|length %}
+      <div class="panel-footer">
+        <ul class="list-inline">
+          {% for tag in post.meta.tags|sort %}
+          <li>
+            <a href="{{ url_for('tag', tag=tag) }}">
+              <span itemprop="keywords">{{ tag }}</span>
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+      {%- set readmore = 0 -%}
+      <div class="panel-body">
+        {%- if post.meta.summary %}
+        {%- set readmore = 1 -%}
+        <p>
+          <q itemprop="description">
+            <em>{{ post.summary|trim }}</em>
+          </q>
+        </p>
+        {%- else -%}
+        <span itemprop="description">
+          {%- set truncated = post|truncate_more -%}
+          {%- if truncated -%}
+          {%- set readmore = 1 -%}
+          {{- truncated|safe -}}
+          {%- else -%}
+          {{- post.html|safe -}}
+          {%- endif -%}
+        </span>
+        {%- endif -%}
+        {%- if readmore == 1 -%}
+        <a href="{{ url_for('post', path=post.path) }}">Read more...</a>
+        {%- endif -%}
+      </div>
+    </div>
+    </li>
+  {% endfor %}
+  </ul>
+</div>

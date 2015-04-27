@@ -92,25 +92,25 @@
 <h3 id="dev-meta-port">dev-meta port</h3>
 <h4 id="usrportslocaldev-metamakefile">/usr/ports/local/dev-meta/Makefile</h4>
 <p>This meta port will install <em>git</em>, <em>cscope</em> and <em>vim</em>. Which dependencies those pull in do not matter here.</p>
-<div class="codehilite"><pre><span class="nv">PORTNAME</span><span class="o">=</span>   <span class="nb">local</span>-dev-meta
-<span class="nv">PORTVERSION</span><span class="o">=</span>    20130719
-<span class="nv">CATEGORIES</span><span class="o">=</span> <span class="nb">local</span>
-<span class="nv">MASTER_SITES</span><span class="o">=</span>   <span class="c"># none</span>
-<span class="nv">DISTFILES</span><span class="o">=</span>  <span class="c"># none</span>
-<span class="nv">EXTRACT_ONLY</span><span class="o">=</span>   <span class="c"># none</span>
+<div class="codehilite"><pre><span class="nv">PORTNAME</span><span class="o">=</span>	<span class="nb">local</span>-dev-meta
+<span class="nv">PORTVERSION</span><span class="o">=</span>	20130719
+<span class="nv">CATEGORIES</span><span class="o">=</span>	<span class="nb">local</span>
+<span class="nv">MASTER_SITES</span><span class="o">=</span>	<span class="c"># none</span>
+<span class="nv">DISTFILES</span><span class="o">=</span>	<span class="c"># none</span>
+<span class="nv">EXTRACT_ONLY</span><span class="o">=</span>	<span class="c"># none</span>
 
-<span class="nv">MAINTAINER</span><span class="o">=</span> <span class="nb">local</span>@localdomain.com
-<span class="nv">COMMENT</span><span class="o">=</span>    Meta port <span class="k">for</span> dev packages
+<span class="nv">MAINTAINER</span><span class="o">=</span>	<span class="nb">local</span>@localdomain.com
+<span class="nv">COMMENT</span><span class="o">=</span>	Meta port <span class="k">for</span> dev packages
 
-<span class="nv">NO_BUILD</span><span class="o">=</span>   yes
-<span class="nv">NO_WRKSUBDIR</span><span class="o">=</span>   yes
+<span class="nv">NO_BUILD</span><span class="o">=</span>	yes
+<span class="nv">NO_WRKSUBDIR</span><span class="o">=</span>	yes
 
-<span class="nv">RUN_DEPENDS</span><span class="o">+=</span>   git&gt;0:<span class="si">${</span><span class="nv">PORTSDIR</span><span class="si">}</span>/devel/git
-<span class="nv">RUN_DEPENDS</span><span class="o">+=</span>   cscope&gt;0:<span class="si">${</span><span class="nv">PORTSDIR</span><span class="si">}</span>/devel/cscope
-<span class="nv">RUN_DEPENDS</span><span class="o">+=</span>   vim-lite&gt;0:<span class="si">${</span><span class="nv">PORTSDIR</span><span class="si">}</span>/editors/vim-lite
+<span class="nv">RUN_DEPENDS</span><span class="o">+=</span>	git&gt;0:<span class="si">${</span><span class="nv">PORTSDIR</span><span class="si">}</span>/devel/git
+<span class="nv">RUN_DEPENDS</span><span class="o">+=</span>	cscope&gt;0:<span class="si">${</span><span class="nv">PORTSDIR</span><span class="si">}</span>/devel/cscope
+<span class="nv">RUN_DEPENDS</span><span class="o">+=</span>	vim-lite&gt;0:<span class="si">${</span><span class="nv">PORTSDIR</span><span class="si">}</span>/editors/vim-lite
 
 <span class="nf">do-install</span><span class="o">:</span> <span class="n">build</span>
-    @<span class="si">${</span><span class="nv">DO_NADA</span><span class="si">}</span>
+	@<span class="si">${</span><span class="nv">DO_NADA</span><span class="si">}</span>
 
 <span class="cp">.include &lt;bsd.port.mk&gt;</span>
 </pre></div>
@@ -124,7 +124,7 @@
 
 <h4 id="etcmakeconf">/etc/make.conf</h4>
 <p>The <em>local</em> category must be defined.</p>
-<div class="codehilite"><pre><span class="nv">VALID_CATEGORIES</span><span class="o">+=</span>  <span class="nb">local</span>
+<div class="codehilite"><pre><span class="nv">VALID_CATEGORIES</span><span class="o">+=</span>	<span class="nb">local</span>
 </pre></div>
 
 
@@ -146,7 +146,7 @@
 <span class="go">^D</span>
 <span class="gp">root@build#</span> mkdir /usr/local/etc/poudriere.d
 <span class="gp">root@build#</span> cat &gt;&gt; /usr/local/etc/poudriere.d/make.conf
-<span class="go">WITH_PKGNG= yes</span>
+<span class="go">WITH_PKGNG=	yes</span>
 <span class="go">^D</span>
 </pre></div>
 
@@ -227,48 +227,48 @@
 <span class="go">0 packages updated, 0 removed and 53 added.</span>
 <span class="go">The following 42 packages will be installed:</span>
 
-<span class="go">    Installing libiconv: 1.14_1</span>
-<span class="go">    Installing xproto: 7.0.24</span>
-<span class="go">    Installing renderproto: 0.11.1</span>
-<span class="go">    Installing libXdmcp: 1.1.1</span>
-<span class="go">    Installing libXau: 1.0.8</span>
-<span class="go">    Installing pkgconf: 0.9.2_1</span>
-<span class="go">    Installing libpthread-stubs: 0.3_3</span>
-<span class="go">    Installing kbproto: 1.0.6</span>
-<span class="go">    Installing expat: 2.0.1_2</span>
-<span class="go">    Installing freetype2: 2.4.12_1</span>
-<span class="go">    Installing tcl: 8.5.14_1</span>
-<span class="go">    Installing openssl: 1.0.1_8</span>
-<span class="go">    Installing db42: 4.2.52_5</span>
-<span class="go">    Installing perl: 5.14.4</span>
-<span class="go">    Installing pcre: 8.33</span>
-<span class="go">    Installing libssh2: 1.4.3_1,2</span>
-<span class="go">    Installing ca_root_nss: 3.15.1</span>
-<span class="go">    Installing p5-Net-SMTP-SSL: 1.01_1</span>
-<span class="go">    Installing p5-Error: 0.17020</span>
-<span class="go">    Installing curl: 7.31.0</span>
-<span class="go">    Installing sqlite3: 3.7.17_1</span>
-<span class="go">    Installing p5-Term-ReadKey: 2.30</span>
-<span class="go">    Installing cvsps: 2.1_1</span>
-<span class="go">    Installing cscope: 15.8a</span>
-<span class="go">    Installing gettext: 0.18.3</span>
-<span class="go">    Installing libxml2: 2.8.0_2</span>
-<span class="go">    Installing fontconfig: 2.9.0,1</span>
-<span class="go">    Installing gdbm: 1.10</span>
-<span class="go">    Installing python27: 2.7.5_1</span>
-<span class="go">    Installing vim-lite: 7.3.1314_2</span>
-<span class="go">    Installing libxcb: 1.9.1</span>
-<span class="go">    Installing libX11: 1.6.0,1</span>
-<span class="go">    Installing apr: 1.4.8.1.5.2</span>
-<span class="go">    Installing apache22-worker-mpm: 2.2.25</span>
-<span class="go">    Installing libXrender: 0.9.8</span>
-<span class="go">    Installing libXft: 2.3.1</span>
-<span class="go">    Installing serf: 1.2.1_1</span>
-<span class="go">    Installing subversion: 1.8.0_3</span>
-<span class="go">    Installing p5-subversion: 1.8.0_3</span>
-<span class="go">    Installing tk: 8.5.14_1</span>
-<span class="go">    Installing git: 1.8.3.3_1</span>
-<span class="go">    Installing local-dev-meta: 20130719</span>
+<span class="go">	Installing libiconv: 1.14_1</span>
+<span class="go">	Installing xproto: 7.0.24</span>
+<span class="go">	Installing renderproto: 0.11.1</span>
+<span class="go">	Installing libXdmcp: 1.1.1</span>
+<span class="go">	Installing libXau: 1.0.8</span>
+<span class="go">	Installing pkgconf: 0.9.2_1</span>
+<span class="go">	Installing libpthread-stubs: 0.3_3</span>
+<span class="go">	Installing kbproto: 1.0.6</span>
+<span class="go">	Installing expat: 2.0.1_2</span>
+<span class="go">	Installing freetype2: 2.4.12_1</span>
+<span class="go">	Installing tcl: 8.5.14_1</span>
+<span class="go">	Installing openssl: 1.0.1_8</span>
+<span class="go">	Installing db42: 4.2.52_5</span>
+<span class="go">	Installing perl: 5.14.4</span>
+<span class="go">	Installing pcre: 8.33</span>
+<span class="go">	Installing libssh2: 1.4.3_1,2</span>
+<span class="go">	Installing ca_root_nss: 3.15.1</span>
+<span class="go">	Installing p5-Net-SMTP-SSL: 1.01_1</span>
+<span class="go">	Installing p5-Error: 0.17020</span>
+<span class="go">	Installing curl: 7.31.0</span>
+<span class="go">	Installing sqlite3: 3.7.17_1</span>
+<span class="go">	Installing p5-Term-ReadKey: 2.30</span>
+<span class="go">	Installing cvsps: 2.1_1</span>
+<span class="go">	Installing cscope: 15.8a</span>
+<span class="go">	Installing gettext: 0.18.3</span>
+<span class="go">	Installing libxml2: 2.8.0_2</span>
+<span class="go">	Installing fontconfig: 2.9.0,1</span>
+<span class="go">	Installing gdbm: 1.10</span>
+<span class="go">	Installing python27: 2.7.5_1</span>
+<span class="go">	Installing vim-lite: 7.3.1314_2</span>
+<span class="go">	Installing libxcb: 1.9.1</span>
+<span class="go">	Installing libX11: 1.6.0,1</span>
+<span class="go">	Installing apr: 1.4.8.1.5.2</span>
+<span class="go">	Installing apache22-worker-mpm: 2.2.25</span>
+<span class="go">	Installing libXrender: 0.9.8</span>
+<span class="go">	Installing libXft: 2.3.1</span>
+<span class="go">	Installing serf: 1.2.1_1</span>
+<span class="go">	Installing subversion: 1.8.0_3</span>
+<span class="go">	Installing p5-subversion: 1.8.0_3</span>
+<span class="go">	Installing tk: 8.5.14_1</span>
+<span class="go">	Installing git: 1.8.3.3_1</span>
+<span class="go">	Installing local-dev-meta: 20130719</span>
 
 <span class="go">The installation will require 433 MB more space</span>
 

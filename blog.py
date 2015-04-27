@@ -19,6 +19,21 @@ FLATPAGES_MARKDOWN_EXTENSIONS = ['extra', 'codehilite', 'footnotes',
 PAGE_SIZE = 100
 FREEZER_BASE_URL = "http://blog.shatow.net"
 
+from markdown import util
+from markdown import preprocessors
+import re
+old_preprocessor = preprocessors.NormalizeWhitespace.run
+def fix_markdown_NormalizeWhitespace(self, lines):
+    source = '\n'.join(lines)
+    source = source.replace(util.STX, "").replace(util.ETX, "")
+    source = source.replace("\r\n", "\n").replace("\r", "\n") + "\n\n"
+    # this code is broken https://github.com/waylan/Python-Markdown/issues/36
+    #source = source.expandtabs(self.markdown.tab_length)
+    source = re.sub(r'(?<=\n) +\n', '\n', source)
+    return source.split('\n')
+
+preprocessors.NormalizeWhitespace.run = fix_markdown_NormalizeWhitespace
+
 app = Flask(__name__)
 pages = FlatPages(app)
 freezer = Freezer(app)

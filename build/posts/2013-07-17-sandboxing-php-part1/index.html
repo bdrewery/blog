@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
 
     <title>Bryan Drewery - Sandboxing PHP part 1</title>
@@ -61,54 +61,7 @@
     </ul>
   </div>
 </div>
-
-<span class="icon-large icon-rss"></span></div>
-    <div class="col-md-7">
-      
-
-      
-<div>
-  <div class="page-header">
-    <h2><a href="/posts/2013-07-17-sandboxing-php-part1/">Sandboxing PHP part 1</a></h2>
-  </div>
-  <h3>2013-07-17</h3>
-  <ul class="list-inline">
-    
-    <li><a href="/tag/FreeBSD/">FreeBSD</a></li>
-    
-    <li><a href="/tag/jails/">jails</a></li>
-    
-    <li><a href="/tag/nginx/">nginx</a></li>
-    
-    <li><a href="/tag/PHP/">PHP</a></li>
-    
-    <li><a href="/tag/security/">security</a></li>
-    
-    <li><a href="/tag/shared-hosting/">shared-hosting</a></li>
-    
-    <li><a href="/tag/tech/">tech</a></li>
-    
-  </ul>
-  <p>For additional security layers and separation, I run my web applications inside of dedicated jails. This has been an ongoing progression for me. I will layout where I started, where I progressed, and how I do it now.
-<!--more--></p>
-<h2 id="apachemod95php">Apache+mod_php</h2>
-<p>Originally, I would run all applications under <em>www</em> user using apache+mod_php. This was the classic LAMP approach and the most simple approach to hosting a web application. It is also the most insecure if you are hosting more than 1 user or application. If you are running apache as <em>root</em> then you have effectively given root to the world.</p>
-<p>The biggest problem with this is that every application is executing code as the user that apache is running as. So that &ldquo;secure&rdquo; <em>config.php</em> file with some user or application&rsquo;s private db credentials in can easily be read by another. This creates a very easy attack vector for taking over another site on a shared system. Just sign-up and read in the file. You now can grant yourself administrative rights on their application by connecting directly to the DB.</p>
-<p>Even if you are not doing &ldquo;shared hosting&rdquo;, this makes every application on your system as weak as the weakest application running under <em>www</em>.</p>
-<p>A better approach is to create a dedicated user for every application, or to run an application under the user whos <em>public_html</em> it is in.</p>
-<h2 id="apachesuphp">Apache+suphp</h2>
-<p>An option which was mostly viable up until 2009 was suPHP. It allows executing an application using a setuid wrapper using the php-cli interface. Due to its <a href="http://permalink.gmane.org/gmane.comp.php.suphp.general/1151">EoL</a> status, maintenance history, requiring setuid root, and poor performance, I would not recommend using this for new projects.</p>
-<h2 id="apachemod_fcgisuexecphp-cgi">Apache+mod_fcgi+suexec+php-cgi</h2>
-<p>The next step for me was primarily focused on improving the performance of suphp. This resulted in using mod_fcgi to spawn a CGI process for the application and interact with that. This avoided startup overhead. It&rsquo;s still poor though as it requires the setuid binary and is much more complex since it involved mod_fcgi and an extra wrapper script.</p>
-<h2 id="nginxphp-fpm">nginx+php-fpm</h2>
-<p>This setup works very well in terms of security and performance. A separate php-fpm instance is spawned for each site. I assign each application a dedicated user. The php-fpm processes run as this user and create a CGI interface for nginx to connect to. This can be taken 1 step further with each application in its own jail, to further protect the host system. The jails are configured without WAN access; they only have LAN access and only in a small subnet dedicated for nginx to connect to the jail with.</p>
-<p>In the next part I will cover exactly how this is setup.</p>
-</div>
-
-<div id="disqus_thread"></div>
-
-    </div>
-    <div class="col-md-3"><div class="panel panel-success">
+<div class="panel panel-success">
   <div class="panel-heading">
     <h2 class="panel-title">Tags</h2>
   </div>
@@ -145,9 +98,55 @@
     <a href="/tag/tech/">tech</a>
     
   </div>
+</div></div>
+    <div class="col-md-7">
+      
+
+      
+<div>
+  <div class="page-header">
+    <h2><a href="/posts/2013-07-17-sandboxing-php-part1/">Sandboxing PHP part 1</a></h2>
+    <div class="text-muted">
+      2013-07-17
+      <ul class="list-inline">
+        
+        <li><a href="/tag/FreeBSD/">FreeBSD</a></li>
+        
+        <li><a href="/tag/jails/">jails</a></li>
+        
+        <li><a href="/tag/nginx/">nginx</a></li>
+        
+        <li><a href="/tag/PHP/">PHP</a></li>
+        
+        <li><a href="/tag/security/">security</a></li>
+        
+        <li><a href="/tag/shared-hosting/">shared-hosting</a></li>
+        
+        <li><a href="/tag/tech/">tech</a></li>
+        
+      </ul>
+    </div>
+  </div>
+  <p>For additional security layers and separation, I run my web applications inside of dedicated jails. This has been an ongoing progression for me. I will layout where I started, where I progressed, and how I do it now.
+<!--more--></p>
+<h2 id="apachemod95php">Apache+mod_php</h2>
+<p>Originally, I would run all applications under <em>www</em> user using apache+mod_php. This was the classic LAMP approach and the most simple approach to hosting a web application. It is also the most insecure if you are hosting more than 1 user or application. If you are running apache as <em>root</em> then you have effectively given root to the world.</p>
+<p>The biggest problem with this is that every application is executing code as the user that apache is running as. So that &ldquo;secure&rdquo; <em>config.php</em> file with some user or application&rsquo;s private db credentials in can easily be read by another. This creates a very easy attack vector for taking over another site on a shared system. Just sign-up and read in the file. You now can grant yourself administrative rights on their application by connecting directly to the DB.</p>
+<p>Even if you are not doing &ldquo;shared hosting&rdquo;, this makes every application on your system as weak as the weakest application running under <em>www</em>.</p>
+<p>A better approach is to create a dedicated user for every application, or to run an application under the user whos <em>public_html</em> it is in.</p>
+<h2 id="apachesuphp">Apache+suphp</h2>
+<p>An option which was mostly viable up until 2009 was suPHP. It allows executing an application using a setuid wrapper using the php-cli interface. Due to its <a href="http://permalink.gmane.org/gmane.comp.php.suphp.general/1151">EoL</a> status, maintenance history, requiring setuid root, and poor performance, I would not recommend using this for new projects.</p>
+<h2 id="apachemod_fcgisuexecphp-cgi">Apache+mod_fcgi+suexec+php-cgi</h2>
+<p>The next step for me was primarily focused on improving the performance of suphp. This resulted in using mod_fcgi to spawn a CGI process for the application and interact with that. This avoided startup overhead. It&rsquo;s still poor though as it requires the setuid binary and is much more complex since it involved mod_fcgi and an extra wrapper script.</p>
+<h2 id="nginxphp-fpm">nginx+php-fpm</h2>
+<p>This setup works very well in terms of security and performance. A separate php-fpm instance is spawned for each site. I assign each application a dedicated user. The php-fpm processes run as this user and create a CGI interface for nginx to connect to. This can be taken 1 step further with each application in its own jail, to further protect the host system. The jails are configured without WAN access; they only have LAN access and only in a small subnet dedicated for nginx to connect to the jail with.</p>
+<p>In the next part I will cover exactly how this is setup.</p>
 </div>
 
-<ul class="list-unstyled">
+<div id="disqus_thread"></div>
+
+    </div>
+    <div class="col-md-3"><ul class="list-unstyled">
   
   <li>
     2013

@@ -9,13 +9,15 @@ Bryan Drewery - {{ post.title }}
 <div>
   <div class="page-header">
     <h2><a href="{{ url_for('post', path=post.path) }}">{{ post.title }}</a></h2>
+    <div class="text-muted">
+      {{ post.date }}
+      <ul class="list-inline">
+        {% for tag in post.tags|sort %}
+        <li><a href="{{ url_for('tag', tag=tag) }}">{{ tag }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
   </div>
-  <h3>{{ post.date }}</h3>
-  <ul class="list-inline">
-    {% for tag in post.tags|sort %}
-    <li><a href="{{ url_for('tag', tag=tag) }}">{{ tag }}</a></li>
-    {% endfor %}
-  </ul>
   {{ post.html|safe }}
 </div>
 

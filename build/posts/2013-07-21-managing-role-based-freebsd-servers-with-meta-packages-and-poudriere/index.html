@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
 
     <title>Bryan Drewery - Managing Role Based FreeBSD servers using meta packages and Poudriere</title>
@@ -61,8 +61,44 @@
     </ul>
   </div>
 </div>
-
-<span class="icon-large icon-rss"></span></div>
+<div class="panel panel-success">
+  <div class="panel-heading">
+    <h2 class="panel-title">Tags</h2>
+  </div>
+  <div class="panel-body">
+    
+    
+    <a href="/tag/FreeBSD/">FreeBSD</a>
+    
+    
+    <a href="/tag/jails/">jails</a>
+    
+    
+    <a href="/tag/nginx/">nginx</a>
+    
+    
+    <a href="/tag/PHP/">PHP</a>
+    
+    
+    <a href="/tag/pkg/">pkg</a>
+    
+    
+    <a href="/tag/ports/">ports</a>
+    
+    
+    <a href="/tag/poudriere/">poudriere</a>
+    
+    
+    <a href="/tag/security/">security</a>
+    
+    
+    <a href="/tag/shared-hosting/">shared-hosting</a>
+    
+    
+    <a href="/tag/tech/">tech</a>
+    
+  </div>
+</div></div>
     <div class="col-md-7">
       
 
@@ -70,21 +106,23 @@
 <div>
   <div class="page-header">
     <h2><a href="/posts/2013-07-21-managing-role-based-freebsd-servers-with-meta-packages-and-poudriere/">Managing Role Based FreeBSD servers using meta packages and Poudriere</a></h2>
+    <div class="text-muted">
+      2013-07-21
+      <ul class="list-inline">
+        
+        <li><a href="/tag/FreeBSD/">FreeBSD</a></li>
+        
+        <li><a href="/tag/pkg/">pkg</a></li>
+        
+        <li><a href="/tag/ports/">ports</a></li>
+        
+        <li><a href="/tag/poudriere/">poudriere</a></li>
+        
+        <li><a href="/tag/tech/">tech</a></li>
+        
+      </ul>
+    </div>
   </div>
-  <h3>2013-07-21</h3>
-  <ul class="list-inline">
-    
-    <li><a href="/tag/FreeBSD/">FreeBSD</a></li>
-    
-    <li><a href="/tag/pkg/">pkg</a></li>
-    
-    <li><a href="/tag/ports/">ports</a></li>
-    
-    <li><a href="/tag/poudriere/">poudriere</a></li>
-    
-    <li><a href="/tag/tech/">tech</a></li>
-    
-  </ul>
   <p>To simplify server management I create &ldquo;meta&rdquo; packages in FreeBSD ports that can generate a package with only dependencies on other packages. This allows to me to just install this 1 package on the target server and have it pull in all of the packages that I want on there. I assign each server specific &ldquo;roles&rdquo; and only install 1 or 2 packages per server depending on which roles they fulfill. The roles may be one of &ldquo;dev&rdquo;, &ldquo;web&rdquo;, &ldquo;ports-dev&rdquo;, &ldquo;jail&rdquo;, etc. This ensures that all servers fulfilling specific roles will always have the proper packages installed. For some applications, I use a dedicated jail with a meta package that only pulls in the required dependencies for that application to run. For instance, on a PHP application jail, the meta package may pull in nginx, php, eaccelerator, git, etc.
 <!--more--></p>
 <h2 id="packages-are-created-from-ports">Packages are created from ports</h2>
@@ -292,46 +330,7 @@
 <div id="disqus_thread"></div>
 
     </div>
-    <div class="col-md-3"><div class="panel panel-success">
-  <div class="panel-heading">
-    <h2 class="panel-title">Tags</h2>
-  </div>
-  <div class="panel-body">
-    
-    
-    <a href="/tag/FreeBSD/">FreeBSD</a>
-    
-    
-    <a href="/tag/jails/">jails</a>
-    
-    
-    <a href="/tag/nginx/">nginx</a>
-    
-    
-    <a href="/tag/PHP/">PHP</a>
-    
-    
-    <a href="/tag/pkg/">pkg</a>
-    
-    
-    <a href="/tag/ports/">ports</a>
-    
-    
-    <a href="/tag/poudriere/">poudriere</a>
-    
-    
-    <a href="/tag/security/">security</a>
-    
-    
-    <a href="/tag/shared-hosting/">shared-hosting</a>
-    
-    
-    <a href="/tag/tech/">tech</a>
-    
-  </div>
-</div>
-
-<ul class="list-unstyled">
+    <div class="col-md-3"><ul class="list-unstyled">
   
   <li>
     2013

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
 
     <title>Bryan Drewery - btxld: No such file or directory</title>
@@ -61,53 +61,7 @@
     </ul>
   </div>
 </div>
-
-<span class="icon-large icon-rss"></span></div>
-    <div class="col-md-7">
-      
-
-      
-<div>
-  <div class="page-header">
-    <h2><a href="/posts/2013-07-16-btxld-no-such-file-or-directory/">btxld: No such file or directory</a></h2>
-  </div>
-  <h3>2013-07-16</h3>
-  <ul class="list-inline">
-    
-    <li><a href="/tag/FreeBSD/">FreeBSD</a></li>
-    
-    <li><a href="/tag/tech/">tech</a></li>
-    
-  </ul>
-  <p>For years I have ran into this error while running <code>make installworld</code>:</p>
-<div class="codehilite"><pre><span class="gp">#</span> make installworld
-<span class="go">[...]</span>
-<span class="go">===&gt; sys/boot/i386/boot2 (install)</span>
-<span class="go">cc -Os  -fno-guess-branch-probability  -fomit-frame-pointer  -fno-unit-at-a-time  -mno-align-long-strings  -mrtd  -mregparm=3  -DUSE_XREAD  -DUFS1_AND_UFS2  -DFLAGS=0x80  -DSIOPRT=0x3f8  -DSIOFMT=0x3  -DSIOSPD=9600  -I/usr/src/sys/boot/i386/boot2/../../common  -I/usr/src/sys/boot/i386/boot2/../btx/lib -I.  -Wall -Waggregate-return -Wbad-function-cast -Wcast-align  -Wmissing-declarations -Wmissing-prototypes -Wnested-externs  -Wpointer-arith -Wshadow -Wstrict-prototypes -Wwrite-strings  -Winline --param max-inline-insns-single=100   -march=i386 -ffreestanding -mpreferred-stack-boundary=2  -mno-mmx -mno-3dnow -mno-sse -mno-sse2 -mno-sse3 -msoft-float -m32 -std=gnu99    -S -o boot2.s.tmp /usr/src/sys/boot/i386/boot2/boot2.c</span>
-<span class="go">sed -e &#39;/align/d&#39; -e &#39;/nop/d&#39; &lt; boot2.s.tmp &gt; boot2.s</span>
-<span class="go">rm -f boot2.s.tmp</span>
-<span class="go">cc  -m32 -c boot2.s</span>
-<span class="go">ld -static -N --gc-sections -nostdlib -m elf_i386_fbsd -Ttext 0x2000 -o boot2.out /usr/obj/usr/src/sys/boot/i386/boot2/../btx/lib/crt0.o boot2.o sio.o</span>
-<span class="go">objcopy -S -O binary boot2.out boot2.bin</span>
-<span class="go">btxld -v -E 0x2000 -f bin -b /usr/obj/usr/src/sys/boot/i386/boot2/../btx/btx/btx -l boot2.ldr  -o boot2.ld -P 1 boot2.bin</span>
-<span class="go">btxld: No such file or directory</span>
-<span class="go">*** [boot2.ld] Error code 1</span>
-
-<span class="go">Stop in /usr/src/sys/boot/i386/boot2.</span>
-<span class="go">*** [realinstall] Error code 1</span>
-</pre></div>
-
-
-<p>This has <a href="http://lists.freebsd.org/pipermail/freebsd-current/2010-June/018292.html">come</a>, <a href="http://lists.freebsd.org/pipermail/freebsd-amd64/2006-September/008849.html">up</a>, <a href="http://lists.freebsd.org/pipermail/freebsd-amd64/2004-August/001906.html">before</a>.</p>
-<p>Most of the posts mention bad timestamps or incorrect date. I&rsquo;ve always been running ntpd though and running <code>make buildworld</code> before <code>make installworld</code>.</p>
-<p>My longterm workaround was to <code>make -C /usr/src/sys/boot/i386</code> before running <code>make installworld</code>.</p>
-<p>Recently this workaround stopped working for me. Looking into it more, I realized that I was applying custom patches to the src tree and then removing them before <code>make installworld</code>. This was changing timestamps of source files, causing a rebuild during <code>make installworld</code>. Changing my scripts to leave the patch applied until after everything is installed solves it.</p>
-</div>
-
-<div id="disqus_thread"></div>
-
-    </div>
-    <div class="col-md-3"><div class="panel panel-success">
+<div class="panel panel-success">
   <div class="panel-heading">
     <h2 class="panel-title">Tags</h2>
   </div>
@@ -144,9 +98,54 @@
     <a href="/tag/tech/">tech</a>
     
   </div>
+</div></div>
+    <div class="col-md-7">
+      
+
+      
+<div>
+  <div class="page-header">
+    <h2><a href="/posts/2013-07-16-btxld-no-such-file-or-directory/">btxld: No such file or directory</a></h2>
+    <div class="text-muted">
+      2013-07-16
+      <ul class="list-inline">
+        
+        <li><a href="/tag/FreeBSD/">FreeBSD</a></li>
+        
+        <li><a href="/tag/tech/">tech</a></li>
+        
+      </ul>
+    </div>
+  </div>
+  <p>For years I have ran into this error while running <code>make installworld</code>:</p>
+<div class="codehilite"><pre><span class="gp">#</span> make installworld
+<span class="go">[...]</span>
+<span class="go">===&gt; sys/boot/i386/boot2 (install)</span>
+<span class="go">cc -Os  -fno-guess-branch-probability  -fomit-frame-pointer  -fno-unit-at-a-time  -mno-align-long-strings  -mrtd  -mregparm=3  -DUSE_XREAD  -DUFS1_AND_UFS2  -DFLAGS=0x80  -DSIOPRT=0x3f8  -DSIOFMT=0x3  -DSIOSPD=9600  -I/usr/src/sys/boot/i386/boot2/../../common  -I/usr/src/sys/boot/i386/boot2/../btx/lib -I.  -Wall -Waggregate-return -Wbad-function-cast -Wcast-align  -Wmissing-declarations -Wmissing-prototypes -Wnested-externs  -Wpointer-arith -Wshadow -Wstrict-prototypes -Wwrite-strings  -Winline --param max-inline-insns-single=100   -march=i386 -ffreestanding -mpreferred-stack-boundary=2  -mno-mmx -mno-3dnow -mno-sse -mno-sse2 -mno-sse3 -msoft-float -m32 -std=gnu99    -S -o boot2.s.tmp /usr/src/sys/boot/i386/boot2/boot2.c</span>
+<span class="go">sed -e &#39;/align/d&#39; -e &#39;/nop/d&#39; &lt; boot2.s.tmp &gt; boot2.s</span>
+<span class="go">rm -f boot2.s.tmp</span>
+<span class="go">cc  -m32 -c boot2.s</span>
+<span class="go">ld -static -N --gc-sections -nostdlib -m elf_i386_fbsd -Ttext 0x2000 -o boot2.out /usr/obj/usr/src/sys/boot/i386/boot2/../btx/lib/crt0.o boot2.o sio.o</span>
+<span class="go">objcopy -S -O binary boot2.out boot2.bin</span>
+<span class="go">btxld -v -E 0x2000 -f bin -b /usr/obj/usr/src/sys/boot/i386/boot2/../btx/btx/btx -l boot2.ldr  -o boot2.ld -P 1 boot2.bin</span>
+<span class="go">btxld: No such file or directory</span>
+<span class="go">*** [boot2.ld] Error code 1</span>
+
+<span class="go">Stop in /usr/src/sys/boot/i386/boot2.</span>
+<span class="go">*** [realinstall] Error code 1</span>
+</pre></div>
+
+
+<p>This has <a href="http://lists.freebsd.org/pipermail/freebsd-current/2010-June/018292.html">come</a>, <a href="http://lists.freebsd.org/pipermail/freebsd-amd64/2006-September/008849.html">up</a>, <a href="http://lists.freebsd.org/pipermail/freebsd-amd64/2004-August/001906.html">before</a>.</p>
+<p>Most of the posts mention bad timestamps or incorrect date. I&rsquo;ve always been running ntpd though and running <code>make buildworld</code> before <code>make installworld</code>.</p>
+<p>My longterm workaround was to <code>make -C /usr/src/sys/boot/i386</code> before running <code>make installworld</code>.</p>
+<p>Recently this workaround stopped working for me. Looking into it more, I realized that I was applying custom patches to the src tree and then removing them before <code>make installworld</code>. This was changing timestamps of source files, causing a rebuild during <code>make installworld</code>. Changing my scripts to leave the patch applied until after everything is installed solves it.</p>
 </div>
 
-<ul class="list-unstyled">
+<div id="disqus_thread"></div>
+
+    </div>
+    <div class="col-md-3"><ul class="list-unstyled">
   
   <li>
     2013

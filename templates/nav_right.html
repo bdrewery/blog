@@ -1,15 +1,3 @@
-<div class="panel panel-success">
-  <div class="panel-heading">
-    <h2 class="panel-title">Tags</h2>
-  </div>
-  <div class="panel-body">
-    {% for tag in all_tags|sort %}
-    {#<a href="{{ url_for('tag', tag=tag) }}">{{ tag }}({{ all_tags[tag] }})</a>#}
-    <a href="{{ url_for('tag', tag=tag) }}">{{ tag }}</a>
-    {% endfor %}
-  </div>
-</div>
-
 <ul class="list-unstyled">
   {% for year, year_posts in recent_posts|groupby("date.year")|sort(reverse=True) %}
   <li>

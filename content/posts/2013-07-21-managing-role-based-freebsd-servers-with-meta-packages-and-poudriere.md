@@ -11,11 +11,10 @@ To create meta packages, define a port that requires the actual ports that shoul
 
 ### dev-meta port
 
-#### /usr/ports/local/dev-meta/Makefile
-
 This meta port will install *git*, *cscope* and *vim*. Which dependencies those pull in do not matter here.
 
     :::make
+    # /usr/ports/local/dev-meta/Makefile
     PORTNAME=	local-dev-meta
     PORTVERSION=	20130719
     CATEGORIES=	local
@@ -40,15 +39,13 @@ This meta port will install *git*, *cscope* and *vim*. Which dependencies those 
 
 Note the _RUN\_DEPENDS_ line is depending on *package names*, not *binary names*. Any version will satisfy the dependency.
 
-#### /usr/ports/local/dev-meta/pkg-descr
-
+    # /usr/ports/local/dev-meta/pkg-descr
     Development meta port
-
-#### /etc/make.conf
 
 The _local_ category must be defined.
 
     :::make
+    # /etc/make.conf
     VALID_CATEGORIES+=	local
 
 ### Building packages with Poudriere
@@ -131,7 +128,6 @@ The repository is now ready for use on the target servers.
 ## Role based servers with packages
 
 On the target server, the appropriate meta packages just need to be installed now.
-
 
 First bootstrap the system with pkg if needed.
 

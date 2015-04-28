@@ -59,26 +59,27 @@ The frontend server and backend application server can be combined if wanted:
 
 The frontend server is the only one that needs WAN access. It will only need nginx installed which will forward all requests to the backend application servers. A typical configuration for the reverse proxy is:
 
-    :::nginx
-    # /usr/local/etc/nginx/vhosts/blog.example.com
+```nginx
+# /usr/local/etc/nginx/vhosts/blog.example.com
 
-    server {
-        listen       1.2.3.4:80;
-        server_name  blog.example.com;
+server {
+    listen       1.2.3.4:80;
+    server_name  blog.example.com;
 
-        # Cache all static content for 2 days
-        location ~* ^.+.(jpg|jpeg|gif|png|ico|css|zip|tgz|gz|rar|bz2|doc|xls|exe|pdf|ppt|txt|tar|mid|midi|wav|bmp|rtf|js)$ {
-            proxy_cache_valid 200 201 302 120m;
-            expires 2d;
-            proxy_pass http://10.50.2.2:80;
-            proxy_cache one;
-        }
-
-        location / {
-            proxy_pass http://10.50.2.2:80;
-            proxy_read_timeout 40;
-        }
+    # Cache all static content for 2 days
+    location ~* ^.+.(jpg|jpeg|gif|png|ico|css|zip|tgz|gz|rar|bz2|doc|xls|exe|pdf|ppt|txt|tar|mid|midi|wav|bmp|rtf|js)$ {
+        proxy_cache_valid 200 201 302 120m;
+        expires 2d;
+        proxy_pass http://10.50.2.2:80;
+        proxy_cache one;
     }
+
+    location / {
+        proxy_pass http://10.50.2.2:80;
+        proxy_read_timeout 40;
+    }
+}
+```
 
 This will forward all requests to the backend server for _blog.example.com_ on _10.50.1.2_. It will also cache all static content on the frontend server for 2 days which will lessen the load on the backend application server.
 
@@ -88,6 +89,8 @@ Each application that needs to be setup will have its own jail and its own nginx
 
 First the jail IPs need to be added to the host. Add them to the interface's address list in _/etc/rc.conf_:
 
+    :::shell
+    # /etc/rc.conf
     ipv4_addrs_em0="10.50.2.2/24 10.50.3.2/24"
 
 Then restart networking:
@@ -130,74 +133,76 @@ This example assumes that [PHP-FPM](http://php-fpm.org/) will be used with a PHP
 
 nginx needs to be setup to use FastCGI.
 
-    :::nginx
-    # /usr/local/etc/nginx/vhosts/blog.example.com
+```nginx
+# /usr/local/etc/nginx/vhosts/blog.example.com
+server {
+    listen       10.50.2.2:80;
+    server_name  blog.example.com;
 
-    server {
-        listen       10.50.2.2:80;
-        server_name  blog.example.com;
-
-        location / {
-            alias /usr/local/www/blog/;
-            index index.php index.html index.htm;
-            break;
-        }
-
-        location ~ /(.*\.php)$ {
-            root /usr/local/www/blog/;
-
-            # Filter out arbitrary code execution
-            try_files $uri = 404;
-            location ~ \..*/.*\.php$ {return 404;}
-
-            fastcgi_pass   unix:/var/run/php-fpm-www.sock;
-            include        fastcgi_params;
-            break;
-        }
+    location / {
+        alias /usr/local/www/blog/;
+        index index.php index.html index.htm;
+        break;
     }
 
-    # /usr/local/etc/nginx/fastcgi_params
+    location ~ /(.*\.php)$ {
+        root /usr/local/www/blog/;
 
-    fastcgi_index  index.php;
+        # Filter out arbitrary code execution
+        try_files $uri = 404;
+        location ~ \..*/.*\.php$ {return 404;}
 
-    fastcgi_connect_timeout 60;
-    fastcgi_send_timeout 180;
-    fastcgi_read_timeout 180;
-    fastcgi_buffer_size 128k;
-    fastcgi_buffers 4 256k;
-    fastcgi_busy_buffers_size 256k;
-    fastcgi_temp_file_write_size 256k;
-    fastcgi_intercept_errors on;
+        fastcgi_pass   unix:/var/run/php-fpm-www.sock;
+        include        fastcgi_params;
+        break;
+    }
+}
+```
+```nginx
+# /usr/local/etc/nginx/fastcgi_params
+fastcgi_index  index.php;
 
-    fastcgi_param  PATH_INFO          $fastcgi_path_info;
-    fastcgi_param  PATH_TRANSLATED    $document_root$fastcgi_path_info;
+fastcgi_connect_timeout 60;
+fastcgi_send_timeout 180;
+fastcgi_read_timeout 180;
+fastcgi_buffer_size 128k;
+fastcgi_buffers 4 256k;
+fastcgi_busy_buffers_size 256k;
+fastcgi_temp_file_write_size 256k;
+fastcgi_intercept_errors on;
 
-    fastcgi_param  QUERY_STRING       $query_string;
-    fastcgi_param  REQUEST_METHOD     $request_method;
-    fastcgi_param  CONTENT_TYPE       $content_type;
-    fastcgi_param  CONTENT_LENGTH     $content_length;
+fastcgi_param  PATH_INFO          $fastcgi_path_info;
+fastcgi_param  PATH_TRANSLATED    $document_root$fastcgi_path_info;
 
-    fastcgi_param  SCRIPT_NAME        $fastcgi_script_name;
-    fastcgi_param  SCRIPT_FILENAME    $document_root$fastcgi_script_name;
-    fastcgi_param  REQUEST_URI        $request_uri;
-    fastcgi_param  DOCUMENT_URI       $document_uri;
-    fastcgi_param  DOCUMENT_ROOT      $document_root;
-    fastcgi_param  SERVER_PROTOCOL    $server_protocol;
+fastcgi_param  QUERY_STRING       $query_string;
+fastcgi_param  REQUEST_METHOD     $request_method;
+fastcgi_param  CONTENT_TYPE       $content_type;
+fastcgi_param  CONTENT_LENGTH     $content_length;
 
-    fastcgi_param  GATEWAY_INTERFACE  CGI/1.1;
-    fastcgi_param  SERVER_SOFTWARE    nginx/$nginx_version;
+fastcgi_param  SCRIPT_NAME        $fastcgi_script_name;
+fastcgi_param  SCRIPT_FILENAME    $document_root$fastcgi_script_name;
+fastcgi_param  REQUEST_URI        $request_uri;
+fastcgi_param  DOCUMENT_URI       $document_uri;
+fastcgi_param  DOCUMENT_ROOT      $document_root;
+fastcgi_param  SERVER_PROTOCOL    $server_protocol;
 
-    fastcgi_param  REMOTE_ADDR        $remote_addr;
-    fastcgi_param  REMOTE_PORT        $remote_port;
-    fastcgi_param  SERVER_ADDR        $server_addr;
-    fastcgi_param  SERVER_PORT        $server_port;
-    fastcgi_param  SERVER_NAME        $server_name;
+fastcgi_param  GATEWAY_INTERFACE  CGI/1.1;
+fastcgi_param  SERVER_SOFTWARE    nginx/$nginx_version;
 
-    # PHP only, required if PHP was built with --enable-force-cgi-redirect
-    fastcgi_param  REDIRECT_STATUS    200;
+fastcgi_param  REMOTE_ADDR        $remote_addr;
+fastcgi_param  REMOTE_PORT        $remote_port;
+fastcgi_param  SERVER_ADDR        $server_addr;
+fastcgi_param  SERVER_PORT        $server_port;
+fastcgi_param  SERVER_NAME        $server_name;
 
-    # /etc/rc.conf
-    nginx_enable=YES
+# PHP only, required if PHP was built with --enable-force-cgi-redirect
+fastcgi_param  REDIRECT_STATUS    200;
+```
+
+```shell
+# /etc/rc.conf
+nginx_enable=YES
+```
 
 Start nginx with `service nginx start`.
 
@@ -205,16 +210,19 @@ Start nginx with `service nginx start`.
 
 PHP-FPM will start a daemon to listen for local connections from nginx. All that needs to be done for PHP-FPM is to configure it to listen on a UNIX socket and to enable it on boot.
 
-    :::shell-session
-    # /usr/local/etc/php-fpm.conf
-    # Replace listen lines with:
-    listen = /var/run/php-fpm-$pool.sock
-    listen.owner = www
-    listen.group = www
-    listen.mode = 0660
+```ini
+# /usr/local/etc/php-fpm.conf
+# Replace listen lines with:
+listen = /var/run/php-fpm-$pool.sock
+listen.owner = www
+listen.group = www
+listen.mode = 0660
+```
 
-    # /etc/rc.conf
-    php_fpm_enable=YES
+```shell
+# /etc/rc.conf
+php_fpm_enable=YES
+```
 
 Start PHP-FPM with `service php-fpm start`.
 

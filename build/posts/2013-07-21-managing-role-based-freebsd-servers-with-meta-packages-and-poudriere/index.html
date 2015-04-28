@@ -90,8 +90,8 @@
 <h2 id="packages-are-created-from-ports">Packages are created from ports</h2>
 <p>To create meta packages, define a port that requires the actual ports that should be installed. Then build packages for those meta ports.</p>
 <h3 id="dev-meta-port">dev-meta port</h3>
-<h4 id="usrportslocaldev-metamakefile">/usr/ports/local/dev-meta/Makefile</h4>
 <p>This meta port will install <em>git</em>, <em>cscope</em> and <em>vim</em>. Which dependencies those pull in do not matter here.</p>
+<h4 class="code_title">/usr/ports/local/dev-meta/Makefile</h4>
 <div class="codehilite"><pre><span class="nv">PORTNAME</span><span class="o">=</span>	<span class="nb">local</span>-dev-meta
 <span class="nv">PORTVERSION</span><span class="o">=</span>	20130719
 <span class="nv">CATEGORIES</span><span class="o">=</span>	<span class="nb">local</span>
@@ -117,13 +117,13 @@
 
 
 <p>Note the <em>RUN_DEPENDS</em> line is depending on <em>package names</em>, not <em>binary names</em>. Any version will satisfy the dependency.</p>
-<h4 id="usrportslocaldev-metapkg-descr">/usr/ports/local/dev-meta/pkg-descr</h4>
+<h4 class="code_title">/usr/ports/local/dev-meta/pkg-descr</h4>
 <div class="codehilite"><pre>Development meta port
 </pre></div>
 
 
-<h4 id="etcmakeconf">/etc/make.conf</h4>
 <p>The <em>local</em> category must be defined.</p>
+<h4 class="code_title">/etc/make.conf</h4>
 <div class="codehilite"><pre><span class="nv">VALID_CATEGORIES</span><span class="o">+=</span>	<span class="nb">local</span>
 </pre></div>
 

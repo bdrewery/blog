@@ -144,9 +144,8 @@
 
 <h2 id="reverse-proxy-frontend-server">Reverse proxy / Frontend server</h2>
 <p>The frontend server is the only one that needs WAN access. It will only need nginx installed which will forward all requests to the backend application servers. A typical configuration for the reverse proxy is:</p>
-<div class="codehilite"><pre><span class="c1"># /usr/local/etc/nginx/vhosts/blog.example.com</span>
-
-<span class="k">server</span> <span class="p">{</span>
+<h4 class="code_title">/usr/local/etc/nginx/vhosts/blog.example.com</h4>
+<div class="codehilite"><pre><span class="k">server</span> <span class="p">{</span>
     <span class="kn">listen</span>       <span class="n">1.2.3.4</span><span class="p">:</span><span class="mi">80</span><span class="p">;</span>
     <span class="kn">server_name</span>  <span class="s">blog.example.com</span><span class="p">;</span>
 
@@ -170,7 +169,8 @@
 <h2 id="application-server">Application Server</h2>
 <p>Each application that needs to be setup will have its own jail and its own nginx process inside of that jail if needed. Some applications have their own network daemons that will not require using nginx for FastCGI.</p>
 <p>First the jail IPs need to be added to the host. Add them to the interface&rsquo;s address list in <em>/etc/rc.conf</em>:</p>
-<div class="codehilite"><pre>ipv4_addrs_em0=&quot;10.50.2.2/24 10.50.3.2/24&quot;
+<h4 class="code_title">/etc/rc.conf</h4>
+<div class="codehilite"><pre><span class="nv">ipv4_addrs_em0</span><span class="o">=</span><span class="s2">&quot;10.50.2.2/24 10.50.3.2/24&quot;</span>
 </pre></div>
 
 
@@ -208,9 +208,8 @@
 <p>This example assumes that <a href="http://php-fpm.org/">PHP-FPM</a> will be used with a PHP application.</p>
 <h4 id="nginx">nginx</h4>
 <p>nginx needs to be setup to use FastCGI.</p>
-<div class="codehilite"><pre><span class="c1"># /usr/local/etc/nginx/vhosts/blog.example.com</span>
-
-<span class="k">server</span> <span class="p">{</span>
+<h4 class="code_title">/usr/local/etc/nginx/vhosts/blog.example.com</h4>
+<div class="codehilite"><pre><span class="k">server</span> <span class="p">{</span>
     <span class="kn">listen</span>       <span class="n">10.50.2.2</span><span class="p">:</span><span class="mi">80</span><span class="p">;</span>
     <span class="kn">server_name</span>  <span class="s">blog.example.com</span><span class="p">;</span>
 
@@ -232,10 +231,11 @@
         <span class="kn">break</span><span class="p">;</span>
     <span class="p">}</span>
 <span class="p">}</span>
+</pre></div>
 
-<span class="c1"># /usr/local/etc/nginx/fastcgi_params</span>
 
-<span class="k">fastcgi_index</span>  <span class="s">index.php</span><span class="p">;</span>
+<h4 class="code_title">/usr/local/etc/nginx/fastcgi_params</h4>
+<div class="codehilite"><pre><span class="k">fastcgi_index</span>  <span class="s">index.php</span><span class="p">;</span>
 
 <span class="k">fastcgi_connect_timeout</span> <span class="mi">60</span><span class="p">;</span>
 <span class="k">fastcgi_send_timeout</span> <span class="mi">180</span><span class="p">;</span>
@@ -272,24 +272,28 @@
 
 <span class="c1"># PHP only, required if PHP was built with --enable-force-cgi-redirect</span>
 <span class="k">fastcgi_param</span>  <span class="s">REDIRECT_STATUS</span>    <span class="mi">200</span><span class="p">;</span>
+</pre></div>
 
-<span class="c1"># /etc/rc.conf</span>
-<span class="k">nginx_enable=YES</span>
+
+<h4 class="code_title">/etc/rc.conf</h4>
+<div class="codehilite"><pre><span class="nv">nginx_enable</span><span class="o">=</span>YES
 </pre></div>
 
 
 <p>Start nginx with <code>service nginx start</code>.</p>
 <h4 id="php-fpm">PHP-FPM</h4>
 <p>PHP-FPM will start a daemon to listen for local connections from nginx. All that needs to be done for PHP-FPM is to configure it to listen on a UNIX socket and to enable it on boot.</p>
-<div class="codehilite"><pre><span class="go"># /usr/local/etc/php-fpm.conf</span>
-<span class="go"># Replace listen lines with:</span>
-<span class="go">listen = /var/run/php-fpm-$pool.sock</span>
-<span class="go">listen.owner = www</span>
-<span class="go">listen.group = www</span>
-<span class="go">listen.mode = 0660</span>
+<h4 class="code_title">/usr/local/etc/php-fpm.conf</h4>
+<div class="codehilite"><pre><span class="c1"># Replace listen lines with:</span>
+<span class="na">listen</span> <span class="o">=</span> <span class="s">/var/run/php-fpm-$pool.sock</span>
+<span class="na">listen.owner</span> <span class="o">=</span> <span class="s">www</span>
+<span class="na">listen.group</span> <span class="o">=</span> <span class="s">www</span>
+<span class="na">listen.mode</span> <span class="o">=</span> <span class="s">0660</span>
+</pre></div>
 
-<span class="go"># /etc/rc.conf</span>
-<span class="go">php_fpm_enable=YES</span>
+
+<h4 class="code_title">/etc/rc.conf</h4>
+<div class="codehilite"><pre><span class="nv">php_fpm_enable</span><span class="o">=</span>YES
 </pre></div>
 
 

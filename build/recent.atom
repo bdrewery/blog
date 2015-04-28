@@ -70,9 +70,8 @@
 
 &lt;h2 id=&quot;reverse-proxy-frontend-server&quot;&gt;Reverse proxy / Frontend server&lt;/h2&gt;
 &lt;p&gt;The frontend server is the only one that needs WAN access. It will only need nginx installed which will forward all requests to the backend application servers. A typical configuration for the reverse proxy is:&lt;/p&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;c1&quot;&gt;# /usr/local/etc/nginx/vhosts/blog.example.com&lt;/span&gt;
-
-&lt;span class=&quot;k&quot;&gt;server&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+&lt;h4 class=&quot;code_title&quot;&gt;/usr/local/etc/nginx/vhosts/blog.example.com&lt;/h4&gt;
+&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;k&quot;&gt;server&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
     &lt;span class=&quot;kn&quot;&gt;listen&lt;/span&gt;       &lt;span class=&quot;n&quot;&gt;1.2.3.4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;80&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
     &lt;span class=&quot;kn&quot;&gt;server_name&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;blog.example.com&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
 
@@ -96,7 +95,8 @@
 &lt;h2 id=&quot;application-server&quot;&gt;Application Server&lt;/h2&gt;
 &lt;p&gt;Each application that needs to be setup will have its own jail and its own nginx process inside of that jail if needed. Some applications have their own network daemons that will not require using nginx for FastCGI.&lt;/p&gt;
 &lt;p&gt;First the jail IPs need to be added to the host. Add them to the interface&amp;rsquo;s address list in &lt;em&gt;/etc/rc.conf&lt;/em&gt;:&lt;/p&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;ipv4_addrs_em0=&amp;quot;10.50.2.2/24 10.50.3.2/24&amp;quot;
+&lt;h4 class=&quot;code_title&quot;&gt;/etc/rc.conf&lt;/h4&gt;
+&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;nv&quot;&gt;ipv4_addrs_em0&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;10.50.2.2/24 10.50.3.2/24&amp;quot;&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -134,9 +134,8 @@
 &lt;p&gt;This example assumes that &lt;a href=&quot;http://php-fpm.org/&quot;&gt;PHP-FPM&lt;/a&gt; will be used with a PHP application.&lt;/p&gt;
 &lt;h4 id=&quot;nginx&quot;&gt;nginx&lt;/h4&gt;
 &lt;p&gt;nginx needs to be setup to use FastCGI.&lt;/p&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;c1&quot;&gt;# /usr/local/etc/nginx/vhosts/blog.example.com&lt;/span&gt;
-
-&lt;span class=&quot;k&quot;&gt;server&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+&lt;h4 class=&quot;code_title&quot;&gt;/usr/local/etc/nginx/vhosts/blog.example.com&lt;/h4&gt;
+&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;k&quot;&gt;server&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
     &lt;span class=&quot;kn&quot;&gt;listen&lt;/span&gt;       &lt;span class=&quot;n&quot;&gt;10.50.2.2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;80&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
     &lt;span class=&quot;kn&quot;&gt;server_name&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;blog.example.com&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
 
@@ -158,10 +157,11 @@
         &lt;span class=&quot;kn&quot;&gt;break&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
     &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
 &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
 
-&lt;span class=&quot;c1&quot;&gt;# /usr/local/etc/nginx/fastcgi_params&lt;/span&gt;
 
-&lt;span class=&quot;k&quot;&gt;fastcgi_index&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;index.php&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;h4 class=&quot;code_title&quot;&gt;/usr/local/etc/nginx/fastcgi_params&lt;/h4&gt;
+&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;k&quot;&gt;fastcgi_index&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;index.php&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
 
 &lt;span class=&quot;k&quot;&gt;fastcgi_connect_timeout&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;60&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
 &lt;span class=&quot;k&quot;&gt;fastcgi_send_timeout&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;180&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
@@ -198,24 +198,28 @@
 
 &lt;span class=&quot;c1&quot;&gt;# PHP only, required if PHP was built with --enable-force-cgi-redirect&lt;/span&gt;
 &lt;span class=&quot;k&quot;&gt;fastcgi_param&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;REDIRECT_STATUS&lt;/span&gt;    &lt;span class=&quot;mi&quot;&gt;200&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
 
-&lt;span class=&quot;c1&quot;&gt;# /etc/rc.conf&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;nginx_enable=YES&lt;/span&gt;
+
+&lt;h4 class=&quot;code_title&quot;&gt;/etc/rc.conf&lt;/h4&gt;
+&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;nv&quot;&gt;nginx_enable&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;YES
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Start nginx with &lt;code&gt;service nginx start&lt;/code&gt;.&lt;/p&gt;
 &lt;h4 id=&quot;php-fpm&quot;&gt;PHP-FPM&lt;/h4&gt;
 &lt;p&gt;PHP-FPM will start a daemon to listen for local connections from nginx. All that needs to be done for PHP-FPM is to configure it to listen on a UNIX socket and to enable it on boot.&lt;/p&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;go&quot;&gt;# /usr/local/etc/php-fpm.conf&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;# Replace listen lines with:&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;listen = /var/run/php-fpm-$pool.sock&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;listen.owner = www&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;listen.group = www&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;listen.mode = 0660&lt;/span&gt;
+&lt;h4 class=&quot;code_title&quot;&gt;/usr/local/etc/php-fpm.conf&lt;/h4&gt;
+&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;c1&quot;&gt;# Replace listen lines with:&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;listen&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/var/run/php-fpm-$pool.sock&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;listen.owner&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;www&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;listen.group&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;www&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;listen.mode&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;0660&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
 
-&lt;span class=&quot;go&quot;&gt;# /etc/rc.conf&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;php_fpm_enable=YES&lt;/span&gt;
+
+&lt;h4 class=&quot;code_title&quot;&gt;/etc/rc.conf&lt;/h4&gt;
+&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;nv&quot;&gt;php_fpm_enable&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;YES
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -247,8 +251,8 @@ Copyright 2013-11-27 Bryan Drewery</content>
 &lt;h2 id=&quot;packages-are-created-from-ports&quot;&gt;Packages are created from ports&lt;/h2&gt;
 &lt;p&gt;To create meta packages, define a port that requires the actual ports that should be installed. Then build packages for those meta ports.&lt;/p&gt;
 &lt;h3 id=&quot;dev-meta-port&quot;&gt;dev-meta port&lt;/h3&gt;
-&lt;h4 id=&quot;usrportslocaldev-metamakefile&quot;&gt;/usr/ports/local/dev-meta/Makefile&lt;/h4&gt;
 &lt;p&gt;This meta port will install &lt;em&gt;git&lt;/em&gt;, &lt;em&gt;cscope&lt;/em&gt; and &lt;em&gt;vim&lt;/em&gt;. Which dependencies those pull in do not matter here.&lt;/p&gt;
+&lt;h4 class=&quot;code_title&quot;&gt;/usr/ports/local/dev-meta/Makefile&lt;/h4&gt;
 &lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;nv&quot;&gt;PORTNAME&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;	&lt;span class=&quot;nb&quot;&gt;local&lt;/span&gt;-dev-meta
 &lt;span class=&quot;nv&quot;&gt;PORTVERSION&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;	20130719
 &lt;span class=&quot;nv&quot;&gt;CATEGORIES&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;	&lt;span class=&quot;nb&quot;&gt;local&lt;/span&gt;
@@ -274,13 +278,13 @@ Copyright 2013-11-27 Bryan Drewery</content>
 
 
 &lt;p&gt;Note the &lt;em&gt;RUN_DEPENDS&lt;/em&gt; line is depending on &lt;em&gt;package names&lt;/em&gt;, not &lt;em&gt;binary names&lt;/em&gt;. Any version will satisfy the dependency.&lt;/p&gt;
-&lt;h4 id=&quot;usrportslocaldev-metapkg-descr&quot;&gt;/usr/ports/local/dev-meta/pkg-descr&lt;/h4&gt;
+&lt;h4 class=&quot;code_title&quot;&gt;/usr/ports/local/dev-meta/pkg-descr&lt;/h4&gt;
 &lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;Development meta port
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h4 id=&quot;etcmakeconf&quot;&gt;/etc/make.conf&lt;/h4&gt;
 &lt;p&gt;The &lt;em&gt;local&lt;/em&gt; category must be defined.&lt;/p&gt;
+&lt;h4 class=&quot;code_title&quot;&gt;/etc/make.conf&lt;/h4&gt;
 &lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;nv&quot;&gt;VALID_CATEGORIES&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt;	&lt;span class=&quot;nb&quot;&gt;local&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 

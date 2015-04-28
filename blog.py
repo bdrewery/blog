@@ -31,8 +31,35 @@ def fix_markdown_NormalizeWhitespace(self, lines):
     #source = source.expandtabs(self.markdown.tab_length)
     source = re.sub(r'(?<=\n) +\n', '\n', source)
     return source.split('\n')
-
 preprocessors.NormalizeWhitespace.run = fix_markdown_NormalizeWhitespace
+
+from markdown.extensions import codehilite
+orig_hilite = codehilite.CodeHilite.hilite
+title_re = re.compile(r'^# (?P<title>[^ ]*)$')
+def hilite_wrapper(self):
+    lines = self.src.split("\n")
+
+    title = None
+    for n in range(min(len(lines), 3)):
+        fl = lines.pop(n)
+        m = title_re.search(fl)
+        if m:
+            try:
+                if m.group('title'):
+                    title = m.group('title')
+            except IndexError:
+                pass
+        if title is None:
+            lines.insert(n, fl)
+        else:
+            break
+    self.src = "\n".join(lines).strip("\n")
+    text = orig_hilite(self)
+    if title:
+        return render_template('code_block.html', code=text, title=title)
+    else:
+        return text
+codehilite.CodeHilite.hilite = hilite_wrapper
 
 app = Flask(__name__)
 pages = FlatPages(app)

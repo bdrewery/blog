@@ -1,7 +1,8 @@
+---
 title: "FreeBSD Journal: Poudriere"
 date: 2015-04-27
 tags: [FreeBSD, poudriere, ports, pkg]
-
+---
 This article appeared in the 2014 March/April edition of the [FreeBSD Journal](https://www.freebsdfoundation.org/journal). It is presented in its original form and is not up-to-date.
 
 # Poudriere

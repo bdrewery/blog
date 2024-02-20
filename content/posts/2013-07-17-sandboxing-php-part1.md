@@ -1,7 +1,8 @@
+---
 title: Sandboxing PHP part 1
 date: 2013-07-17
 tags: [FreeBSD,PHP,nginx,jails,shared-hosting,security,tech]
-
+---
 For additional security layers and separation, I run my web applications inside of dedicated jails. This has been an ongoing progression for me. I will layout where I started, where I progressed, and how I do it now.
 <!--more-->
 

@@ -7,14 +7,14 @@ from flask_flatpages import FlatPages, pygments_style_defs
 from flask_frozen import Freezer
 from operator import itemgetter
 from urllib.parse import urljoin
-from werkzeug.contrib.atom import AtomFeed
+from feedwerk.atom import AtomFeed
 
 DEBUG = True
 FLATPAGES_AUTO_RELOAD = DEBUG
 FLATPAGES_EXTENSION = '.md'
 FLATPAGES_ROOT = 'content'
 FLATPAGES_MARKDOWN_EXTENSIONS = ['extra', 'codehilite', 'footnotes',
-    'fenced_code', 'smart_strong', 'smarty', 'tables', 'toc',
+    'fenced_code', 'smarty', 'tables', 'toc',
     'wikilinks']
 PAGE_SIZE = 100
 FREEZER_BASE_URL = "http://blog.shatow.net"
@@ -36,7 +36,7 @@ preprocessors.NormalizeWhitespace.run = fix_markdown_NormalizeWhitespace
 from markdown.extensions import codehilite
 orig_hilite = codehilite.CodeHilite.hilite
 title_re = re.compile(r'^# (?P<title>[^ ]*)$')
-def hilite_wrapper(self):
+def hilite_wrapper(self, shebang: bool = True):
     lines = self.src.split("\n")
 
     title = None
@@ -54,7 +54,7 @@ def hilite_wrapper(self):
         else:
             break
     self.src = "\n".join(lines).strip("\n")
-    text = orig_hilite(self)
+    text = orig_hilite(self, shebang)
     if title:
         return render_template('code_block.html', code=text, title=title)
     else:

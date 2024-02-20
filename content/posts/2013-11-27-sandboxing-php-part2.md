@@ -1,7 +1,8 @@
+---
 title: Sandboxing PHP part 2
 date: 2013-11-27
 tags: [FreeBSD,PHP,nginx,jails,shared-hosting,security,tech]
-
+---
 The best way to sandbox a web application is in a FreeBSD jail. Taking this a step further and placing a caching nginx reverse proxy in front of it can increase performance. The backend application server does not need to be on the same server as the internet-facing application server.
 <!--more-->
 

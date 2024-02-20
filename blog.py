@@ -6,7 +6,7 @@ from flask_bootstrap import Bootstrap
 from flask_flatpages import FlatPages, pygments_style_defs
 from flask_frozen import Freezer
 from operator import itemgetter
-from urlparse import urljoin
+from urllib.parse import urljoin
 from werkzeug.contrib.atom import AtomFeed
 
 DEBUG = True
@@ -106,7 +106,7 @@ def _find_posts(tag=None):
     return posts
 
 def chunks(l, n):
-    for i in xrange(0, len(l), n):
+    for i in range(0, len(l), n):
         yield l[i:i+n]
 
 def page_chunks(l, page_size, page):

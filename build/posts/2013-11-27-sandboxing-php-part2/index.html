@@ -6,15 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Bootstrap -->
-    <link href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.2/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="/static/blog.css"></link>
 <link rel="stylesheet" href="/static/pygments.css"></link>
 
 
-<!--[if lt IE 9]>
-      <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.min.js"></script>
-      <script src="//cdnjs.cloudflare.com/ajax/libs/respond.js/1.4.2/respond.min.js"></script>
-<![endif]-->
+    <!--[if lt IE 9]>
+          <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
+          <script src="//cdnjs.cloudflare.com/ajax/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
 
 <link rel="shortcut icon" href="/static/favicon.ico">
 <link href="/recent.atom"
@@ -127,119 +127,113 @@
       </ul>
     </div>
   </div>
-  <p>The best way to sandbox a web application is in a FreeBSD jail. Taking this a step further and placing a caching nginx reverse proxy in front of it can increase performance. The backend application server does not need to be on the same server as the internet-facing application server.
-<!--more--></p>
-<p>A typical setup is:</p>
-<div class="codehilite"><pre>                 WAN
-                  ^
-                  |
-               1.2.3.4
-               10.50.1.2
-        +---------+-----------+
-        | Frontend server     |
-        |---------------------|
-        | nginx reverse proxy |
-        +----------+----------+
-                   |
-                  LAN
-                   |
-+------------------+---------------------+
-|           Application server           |
-|----------------------------------------|
-|     10.50.2.2         10.50.3.2        |
-|  +---------------+ +----------------+  |
-|  |  Jail: Blog   | |  Jail: Webmail |  |
-|  |---------------| |----------------|  |
-|  |  php-fpm      | |  php-fpm       |  |
-|  |  nginx        | |  nginx         |  |
-|  +---------------+ +----------------+  |
-+----------------------------------------+
-</pre></div>
+  <p>The best way to sandbox a web application is in a FreeBSD jail. Taking this a step further and placing a caching nginx reverse proxy in front of it can increase performance. The backend application server does not need to be on the same server as the internet-facing application server.</p>
+<!--more-->
 
+<p>A typical setup is:</p>
+<div class="codehilite"><pre><span></span><code><span class="c">                 WAN</span>
+<span class="c">                  ^</span>
+<span class="c">                  |</span>
+<span class="c">               1</span><span class="nt">.</span><span class="c">2</span><span class="nt">.</span><span class="c">3</span><span class="nt">.</span><span class="c">4</span>
+<span class="c">               10</span><span class="nt">.</span><span class="c">50</span><span class="nt">.</span><span class="c">1</span><span class="nt">.</span><span class="c">2</span>
+<span class="c">        </span><span class="nb">+---------+-----------+</span>
+<span class="c">        | Frontend server     |</span>
+<span class="c">        |</span><span class="nb">---------------------</span><span class="c">|</span>
+<span class="c">        | nginx reverse proxy |</span>
+<span class="c">        </span><span class="nb">+----------+----------+</span>
+<span class="c">                   |</span>
+<span class="c">                  LAN</span>
+<span class="c">                   |</span>
+<span class="nb">+------------------+---------------------+</span>
+<span class="c">|           Application server           |</span>
+<span class="c">|</span><span class="nb">----------------------------------------</span><span class="c">|</span>
+<span class="c">|     10</span><span class="nt">.</span><span class="c">50</span><span class="nt">.</span><span class="c">2</span><span class="nt">.</span><span class="c">2         10</span><span class="nt">.</span><span class="c">50</span><span class="nt">.</span><span class="c">3</span><span class="nt">.</span><span class="c">2        |</span>
+<span class="c">|  </span><span class="nb">+---------------+</span><span class="c"> </span><span class="nb">+----------------+</span><span class="c">  |</span>
+<span class="c">|  |  Jail: Blog   | |  Jail: Webmail |  |</span>
+<span class="c">|  |</span><span class="nb">---------------</span><span class="c">| |</span><span class="nb">----------------</span><span class="c">|  |</span>
+<span class="c">|  |  php</span><span class="nb">-</span><span class="c">fpm      | |  php</span><span class="nb">-</span><span class="c">fpm       |  |</span>
+<span class="c">|  |  nginx        | |  nginx         |  |</span>
+<span class="c">|  </span><span class="nb">+---------------+</span><span class="c"> </span><span class="nb">+----------------+</span><span class="c">  |</span>
+<span class="nb">+----------------------------------------+</span>
+</code></pre></div>
 
 <p>This setup allows having the frontend server cache static content to lessen the load on the backend application servers and avoids loading content dynamically through the scripting or CGI interfaces. It also allows segregation for the application servers from the WAN. Each jail can optionally be given WAN access or can be kept as LAN only.</p>
 <p>The frontend server and backend application server can be combined if wanted:</p>
-<div class="codehilite"><pre>                  WAN
-                   ^
-                   |
-+------------------+---------------------+
-|           Application server           |
-|----------------------------------------|
-|        +---------+-----------+         |
-|        | nginx reverse proxy |         |
-|        +---------+-----------+         |
-|                 / \                    |
-|     10.50.2.2         10.50.3.2        |
-|  +---------------+ +----------------+  |
-|  |  Jail: Blog   | |  Jail: Webmail |  |
-|  |---------------| |----------------|  |
-|  |  php-fpm      | |  php-fpm       |  |
-|  |  nginx        | |  nginx         |  |
-|  +---------------+ +----------------+  |
-+----------------------------------------+
-</pre></div>
-
+<div class="codehilite"><pre><span></span><code><span class="c">                  WAN</span>
+<span class="c">                   ^</span>
+<span class="c">                   |</span>
+<span class="nb">+------------------+---------------------+</span>
+<span class="c">|           Application server           |</span>
+<span class="c">|</span><span class="nb">----------------------------------------</span><span class="c">|</span>
+<span class="c">|        </span><span class="nb">+---------+-----------+</span><span class="c">         |</span>
+<span class="c">|        | nginx reverse proxy |         |</span>
+<span class="c">|        </span><span class="nb">+---------+-----------+</span><span class="c">         |</span>
+<span class="c">|                 / \                    |</span>
+<span class="c">|     10</span><span class="nt">.</span><span class="c">50</span><span class="nt">.</span><span class="c">2</span><span class="nt">.</span><span class="c">2         10</span><span class="nt">.</span><span class="c">50</span><span class="nt">.</span><span class="c">3</span><span class="nt">.</span><span class="c">2        |</span>
+<span class="c">|  </span><span class="nb">+---------------+</span><span class="c"> </span><span class="nb">+----------------+</span><span class="c">  |</span>
+<span class="c">|  |  Jail: Blog   | |  Jail: Webmail |  |</span>
+<span class="c">|  |</span><span class="nb">---------------</span><span class="c">| |</span><span class="nb">----------------</span><span class="c">|  |</span>
+<span class="c">|  |  php</span><span class="nb">-</span><span class="c">fpm      | |  php</span><span class="nb">-</span><span class="c">fpm       |  |</span>
+<span class="c">|  |  nginx        | |  nginx         |  |</span>
+<span class="c">|  </span><span class="nb">+---------------+</span><span class="c"> </span><span class="nb">+----------------+</span><span class="c">  |</span>
+<span class="nb">+----------------------------------------+</span>
+</code></pre></div>
 
 <h2 id="reverse-proxy-frontend-server">Reverse proxy / Frontend server</h2>
 <p>The frontend server is the only one that needs WAN access. It will only need nginx installed which will forward all requests to the backend application servers. A typical configuration for the reverse proxy is:</p>
 <h4 class="code_title">/usr/local/etc/nginx/vhosts/blog.example.com</h4>
-<div class="codehilite"><pre><span class="k">server</span> <span class="p">{</span>
-    <span class="kn">listen</span>       <span class="n">1.2.3.4</span><span class="p">:</span><span class="mi">80</span><span class="p">;</span>
-    <span class="kn">server_name</span>  <span class="s">blog.example.com</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><code><span class="k">server</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kn">listen</span><span class="w">       </span><span class="n">1.2.3.4</span><span class="p">:</span><span class="mi">80</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">server_name</span><span class="w">  </span><span class="s">blog.example.com</span><span class="p">;</span>
 
-    <span class="c1"># Cache all static content for 2 days</span>
-    <span class="kn">location</span> <span class="p">~</span><span class="sr">*</span> <span class="s">^.+.(jpg|jpeg|gif|png|ico|css|zip|tgz|gz|rar|bz2|doc|xls|exe|pdf|ppt|txt|tar|mid|midi|wav|bmp|rtf|js)</span>$ <span class="p">{</span>
-        <span class="kn">proxy_cache_valid</span> <span class="mi">200</span> <span class="mi">201</span> <span class="mi">302</span> <span class="mi">120m</span><span class="p">;</span>
-        <span class="kn">expires</span> <span class="s">2d</span><span class="p">;</span>
-        <span class="kn">proxy_pass</span> <span class="s">http://10.50.2.2:80</span><span class="p">;</span>
-        <span class="kn">proxy_cache</span> <span class="no">on</span><span class="s">e</span><span class="p">;</span>
-    <span class="p">}</span>
+<span class="w">    </span><span class="c1"># Cache all static content for 2 days</span>
+<span class="w">    </span><span class="kn">location</span><span class="w"> </span><span class="p">~</span><span class="sr">*</span><span class="w"> </span><span class="s">^.+.(jpg|jpeg|gif|png|ico|css|zip|tgz|gz|rar|bz2|doc|xls|exe|pdf|ppt|txt|tar|mid|midi|wav|bmp|rtf|js)</span>$<span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kn">proxy_cache_valid</span><span class="w"> </span><span class="mi">200</span><span class="w"> </span><span class="mi">201</span><span class="w"> </span><span class="mi">302</span><span class="w"> </span><span class="mi">120m</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">expires</span><span class="w"> </span><span class="s">2d</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_pass</span><span class="w"> </span><span class="s">http://10.50.2.2:80</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_cache</span><span class="w"> </span><span class="no">on</span><span class="s">e</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
 
-    <span class="kn">location</span> <span class="s">/</span> <span class="p">{</span>
-        <span class="kn">proxy_pass</span> <span class="s">http://10.50.2.2:80</span><span class="p">;</span>
-        <span class="kn">proxy_read_timeout</span> <span class="mi">40</span><span class="p">;</span>
-    <span class="p">}</span>
+<span class="w">    </span><span class="kn">location</span><span class="w"> </span><span class="s">/</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kn">proxy_pass</span><span class="w"> </span><span class="s">http://10.50.2.2:80</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">proxy_read_timeout</span><span class="w"> </span><span class="mi">40</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
 <span class="p">}</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>This will forward all requests to the backend server for <em>blog.example.com</em> on <em>10.50.1.2</em>. It will also cache all static content on the frontend server for 2 days which will lessen the load on the backend application server.</p>
 <h2 id="application-server">Application Server</h2>
 <p>Each application that needs to be setup will have its own jail and its own nginx process inside of that jail if needed. Some applications have their own network daemons that will not require using nginx for FastCGI.</p>
 <p>First the jail IPs need to be added to the host. Add them to the interface&rsquo;s address list in <em>/etc/rc.conf</em>:</p>
 <h4 class="code_title">/etc/rc.conf</h4>
-<div class="codehilite"><pre><span class="nv">ipv4_addrs_em0</span><span class="o">=</span><span class="s2">&quot;10.50.2.2/24 10.50.3.2/24&quot;</span>
-</pre></div>
-
+<div class="codehilite"><pre><span></span><code><span class="nv">ipv4_addrs_em0</span><span class="o">=</span><span class="s2">&quot;10.50.2.2/24 10.50.3.2/24&quot;</span>
+</code></pre></div>
 
 <p>Then restart networking:</p>
-<div class="codehilite"><pre><span class="gp">root@host#</span> service netif restart <span class="o">&amp;&amp;</span> service routing restart
-</pre></div>
-
+<div class="codehilite"><pre><span></span><code><span class="gp">root@host# </span>service<span class="w"> </span>netif<span class="w"> </span>restart<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>service<span class="w"> </span>routing<span class="w"> </span>restart
+</code></pre></div>
 
 <h3 id="jail-setup">Jail setup</h3>
 <p>The <a href="http://www.freshports.org/sysutils/ezjail">sysutils/ezjail</a> port is the easiest utility for setting up the jail on FreeBSD. The jail needs to be created from the host and then populated with packages from inside of the jail. More details for this can be found on the <a href="http://erdgeist.org/arts/software/ezjail/">ezjail website</a>.</p>
-<div class="codehilite"><pre><span class="go"># Create the base jail</span>
-<span class="gp">root@host#</span> ezjail-admin update -i
+<div class="codehilite"><pre><span></span><code><span class="gp"># </span>Create<span class="w"> </span>the<span class="w"> </span>base<span class="w"> </span>jail
+<span class="gp">root@host# </span>ezjail-admin<span class="w"> </span>update<span class="w"> </span>-i
 
-<span class="go"># Create each application jail</span>
-<span class="gp">root@host#</span> ezjail-admin create -c zfs -r /tank/jails/blog blog 10.50.2.2
-<span class="gp">root@host#</span> ezjail-admin create -c zfs -r /tank/jails/webmail webmail 10.50.3.2
+<span class="gp"># </span>Create<span class="w"> </span>each<span class="w"> </span>application<span class="w"> </span>jail
+<span class="gp">root@host# </span>ezjail-admin<span class="w"> </span>create<span class="w"> </span>-c<span class="w"> </span>zfs<span class="w"> </span>-r<span class="w"> </span>/tank/jails/blog<span class="w"> </span>blog<span class="w"> </span><span class="m">10</span>.50.2.2
+<span class="gp">root@host# </span>ezjail-admin<span class="w"> </span>create<span class="w"> </span>-c<span class="w"> </span>zfs<span class="w"> </span>-r<span class="w"> </span>/tank/jails/webmail<span class="w"> </span>webmail<span class="w"> </span><span class="m">10</span>.50.3.2
 
-<span class="go"># Start the jails</span>
-<span class="gp">root@host#</span> ezjail-admin start blog
-<span class="gp">root@host#</span> ezjail-admin start webmail
+<span class="gp"># </span>Start<span class="w"> </span>the<span class="w"> </span>jails
+<span class="gp">root@host# </span>ezjail-admin<span class="w"> </span>start<span class="w"> </span>blog
+<span class="gp">root@host# </span>ezjail-admin<span class="w"> </span>start<span class="w"> </span>webmail
 
-<span class="go"># Enable ezjail for next boot</span>
-<span class="gp">root@host#</span> <span class="nb">echo </span><span class="nv">ezjail_enable</span><span class="o">=</span>YES &gt;&gt; /etc/rc.conf
-</pre></div>
-
+<span class="gp"># </span>Enable<span class="w"> </span>ezjail<span class="w"> </span><span class="k">for</span><span class="w"> </span>next<span class="w"> </span>boot
+<span class="gp">root@host# </span><span class="nb">echo</span><span class="w"> </span><span class="nv">ezjail_enable</span><span class="o">=</span>YES<span class="w"> </span>&gt;&gt;<span class="w"> </span>/etc/rc.conf
+</code></pre></div>
 
 <p>Next packages can be installed using <a href="http://www.freebsd.org/doc/handbook/pkgng-intro.html">pkg</a> from the host system. This assumes that meta packages have been setup on the remote repository as described in <a href="/posts/2013-07-21-managing-role-based-freebsd-servers-with-meta-packages-and-poudriere">managing FreeBSD servers with meta packages</a>. This also assumes that the meta package includes all needed dependencies including <a href="http://www.freshports.org/www/nginx">www/nginx</a>.</p>
-<div class="codehilite"><pre><span class="gp">root@host#</span> pkg -j blog install <span class="nb">local</span>/blog
-<span class="gp">root@host#</span> pkg -j webmail install <span class="nb">local</span>/webmail
-</pre></div>
-
+<div class="codehilite"><pre><span></span><code><span class="gp">root@host# </span>pkg<span class="w"> </span>-j<span class="w"> </span>blog<span class="w"> </span>install<span class="w"> </span>local/blog
+<span class="gp">root@host# </span>pkg<span class="w"> </span>-j<span class="w"> </span>webmail<span class="w"> </span>install<span class="w"> </span>local/webmail
+</code></pre></div>
 
 <h3 id="application-setup">Application setup</h3>
 <p>Enter the jail from the host with <code>ezjail-admin console blog</code>. From there nginx, PHP-FPM and the application can all be setup.</p>
@@ -247,102 +241,96 @@
 <h4 id="nginx">nginx</h4>
 <p>nginx needs to be setup to use FastCGI.</p>
 <h4 class="code_title">/usr/local/etc/nginx/vhosts/blog.example.com</h4>
-<div class="codehilite"><pre><span class="k">server</span> <span class="p">{</span>
-    <span class="kn">listen</span>       <span class="n">10.50.2.2</span><span class="p">:</span><span class="mi">80</span><span class="p">;</span>
-    <span class="kn">server_name</span>  <span class="s">blog.example.com</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><code><span class="k">server</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kn">listen</span><span class="w">       </span><span class="n">10.50.2.2</span><span class="p">:</span><span class="mi">80</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">server_name</span><span class="w">  </span><span class="s">blog.example.com</span><span class="p">;</span>
 
-    <span class="kn">location</span> <span class="s">/</span> <span class="p">{</span>
-        <span class="kn">alias</span> <span class="s">/usr/local/www/blog/</span><span class="p">;</span>
-        <span class="kn">index</span> <span class="s">index.php</span> <span class="s">index.html</span> <span class="s">index.htm</span><span class="p">;</span>
-        <span class="kn">break</span><span class="p">;</span>
-    <span class="p">}</span>
+<span class="w">    </span><span class="kn">location</span><span class="w"> </span><span class="s">/</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kn">alias</span><span class="w"> </span><span class="s">/usr/local/www/blog/</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">index</span><span class="w"> </span><span class="s">index.php</span><span class="w"> </span><span class="s">index.html</span><span class="w"> </span><span class="s">index.htm</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">break</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
 
-    <span class="kn">location</span> <span class="p">~</span> <span class="sr">/(.*\.php)$</span> <span class="p">{</span>
-        <span class="kn">root</span> <span class="s">/usr/local/www/blog/</span><span class="p">;</span>
+<span class="w">    </span><span class="kn">location</span><span class="w"> </span><span class="p">~</span><span class="w"> </span><span class="sr">/(.*\.php)$</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kn">root</span><span class="w"> </span><span class="s">/usr/local/www/blog/</span><span class="p">;</span>
 
-        <span class="c1"># Filter out arbitrary code execution</span>
-        <span class="kn">try_files</span> <span class="nv">$uri</span> <span class="p">=</span> <span class="mi">404</span><span class="p">;</span>
-        <span class="kn">location</span> <span class="p">~</span> <span class="sr">\..*/.*\.php$</span> <span class="p">{</span><span class="kn">return</span> <span class="mi">404</span><span class="p">;}</span>
+<span class="w">        </span><span class="c1"># Filter out arbitrary code execution</span>
+<span class="w">        </span><span class="kn">try_files</span><span class="w"> </span><span class="nv">$uri</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="mi">404</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">location</span><span class="w"> </span><span class="p">~</span><span class="w"> </span><span class="sr">\..*/.*\.php$</span><span class="w"> </span><span class="p">{</span><span class="kn">return</span><span class="w"> </span><span class="mi">404</span><span class="p">;}</span>
 
-        <span class="kn">fastcgi_pass</span>   <span class="s">unix:/var/run/php-fpm-www.sock</span><span class="p">;</span>
-        <span class="kn">include</span>        <span class="s">fastcgi_params</span><span class="p">;</span>
-        <span class="kn">break</span><span class="p">;</span>
-    <span class="p">}</span>
+<span class="w">        </span><span class="kn">fastcgi_pass</span><span class="w">   </span><span class="s">unix:/var/run/php-fpm-www.sock</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">include</span><span class="w">        </span><span class="s">fastcgi_params</span><span class="p">;</span>
+<span class="w">        </span><span class="kn">break</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
 <span class="p">}</span>
-</pre></div>
-
+</code></pre></div>
 
 <h4 class="code_title">/usr/local/etc/nginx/fastcgi_params</h4>
-<div class="codehilite"><pre><span class="k">fastcgi_index</span>  <span class="s">index.php</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><code><span class="k">fastcgi_index</span><span class="w">  </span><span class="s">index.php</span><span class="p">;</span>
 
-<span class="k">fastcgi_connect_timeout</span> <span class="mi">60</span><span class="p">;</span>
-<span class="k">fastcgi_send_timeout</span> <span class="mi">180</span><span class="p">;</span>
-<span class="k">fastcgi_read_timeout</span> <span class="mi">180</span><span class="p">;</span>
-<span class="k">fastcgi_buffer_size</span> <span class="mi">128k</span><span class="p">;</span>
-<span class="k">fastcgi_buffers</span> <span class="mi">4</span> <span class="mi">256k</span><span class="p">;</span>
-<span class="k">fastcgi_busy_buffers_size</span> <span class="mi">256k</span><span class="p">;</span>
-<span class="k">fastcgi_temp_file_write_size</span> <span class="mi">256k</span><span class="p">;</span>
-<span class="k">fastcgi_intercept_errors</span> <span class="no">on</span><span class="p">;</span>
+<span class="k">fastcgi_connect_timeout</span><span class="w"> </span><span class="mi">60</span><span class="p">;</span>
+<span class="k">fastcgi_send_timeout</span><span class="w"> </span><span class="mi">180</span><span class="p">;</span>
+<span class="k">fastcgi_read_timeout</span><span class="w"> </span><span class="mi">180</span><span class="p">;</span>
+<span class="k">fastcgi_buffer_size</span><span class="w"> </span><span class="mi">128k</span><span class="p">;</span>
+<span class="k">fastcgi_buffers</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="mi">256k</span><span class="p">;</span>
+<span class="k">fastcgi_busy_buffers_size</span><span class="w"> </span><span class="mi">256k</span><span class="p">;</span>
+<span class="k">fastcgi_temp_file_write_size</span><span class="w"> </span><span class="mi">256k</span><span class="p">;</span>
+<span class="k">fastcgi_intercept_errors</span><span class="w"> </span><span class="no">on</span><span class="p">;</span>
 
-<span class="k">fastcgi_param</span>  <span class="s">PATH_INFO</span>          <span class="nv">$fastcgi_path_info</span><span class="p">;</span>
-<span class="k">fastcgi_param</span>  <span class="s">PATH_TRANSLATED</span>    <span class="nv">$document_root$fastcgi_path_info</span><span class="p">;</span>
+<span class="k">fastcgi_param</span><span class="w">  </span><span class="s">PATH_INFO</span><span class="w">          </span><span class="nv">$fastcgi_path_info</span><span class="p">;</span>
+<span class="k">fastcgi_param</span><span class="w">  </span><span class="s">PATH_TRANSLATED</span><span class="w">    </span><span class="nv">$document_root$fastcgi_path_info</span><span class="p">;</span>
 
-<span class="k">fastcgi_param</span>  <span class="s">QUERY_STRING</span>       <span class="nv">$query_string</span><span class="p">;</span>
-<span class="k">fastcgi_param</span>  <span class="s">REQUEST_METHOD</span>     <span class="nv">$request_method</span><span class="p">;</span>
-<span class="k">fastcgi_param</span>  <span class="s">CONTENT_TYPE</span>       <span class="nv">$content_type</span><span class="p">;</span>
-<span class="k">fastcgi_param</span>  <span class="s">CONTENT_LENGTH</span>     <span class="nv">$content_length</span><span class="p">;</span>
+<span class="k">fastcgi_param</span><span class="w">  </span><span class="s">QUERY_STRING</span><span class="w">       </span><span class="nv">$query_string</span><span class="p">;</span>
+<span class="k">fastcgi_param</span><span class="w">  </span><span class="s">REQUEST_METHOD</span><span class="w">     </span><span class="nv">$request_method</span><span class="p">;</span>
+<span class="k">fastcgi_param</span><span class="w">  </span><span class="s">CONTENT_TYPE</span><span class="w">       </span><span class="nv">$content_type</span><span class="p">;</span>
+<span class="k">fastcgi_param</span><span class="w">  </span><span class="s">CONTENT_LENGTH</span><span class="w">     </span><span class="nv">$content_length</span><span class="p">;</span>
 
-<span class="k">fastcgi_param</span>  <span class="s">SCRIPT_NAME</span>        <span class="nv">$fastcgi_script_name</span><span class="p">;</span>
-<span class="k">fastcgi_param</span>  <span class="s">SCRIPT_FILENAME</span>    <span class="nv">$document_root$fastcgi_script_name</span><span class="p">;</span>
-<span class="k">fastcgi_param</span>  <span class="s">REQUEST_URI</span>        <span class="nv">$request_uri</span><span class="p">;</span>
-<span class="k">fastcgi_param</span>  <span class="s">DOCUMENT_URI</span>       <span class="nv">$document_uri</span><span class="p">;</span>
-<span class="k">fastcgi_param</span>  <span class="s">DOCUMENT_ROOT</span>      <span class="nv">$document_root</span><span class="p">;</span>
-<span class="k">fastcgi_param</span>  <span class="s">SERVER_PROTOCOL</span>    <span class="nv">$server_protocol</span><span class="p">;</span>
+<span class="k">fastcgi_param</span><span class="w">  </span><span class="s">SCRIPT_NAME</span><span class="w">        </span><span class="nv">$fastcgi_script_name</span><span class="p">;</span>
+<span class="k">fastcgi_param</span><span class="w">  </span><span class="s">SCRIPT_FILENAME</span><span class="w">    </span><span class="nv">$document_root$fastcgi_script_name</span><span class="p">;</span>
+<span class="k">fastcgi_param</span><span class="w">  </span><span class="s">REQUEST_URI</span><span class="w">        </span><span class="nv">$request_uri</span><span class="p">;</span>
+<span class="k">fastcgi_param</span><span class="w">  </span><span class="s">DOCUMENT_URI</span><span class="w">       </span><span class="nv">$document_uri</span><span class="p">;</span>
+<span class="k">fastcgi_param</span><span class="w">  </span><span class="s">DOCUMENT_ROOT</span><span class="w">      </span><span class="nv">$document_root</span><span class="p">;</span>
+<span class="k">fastcgi_param</span><span class="w">  </span><span class="s">SERVER_PROTOCOL</span><span class="w">    </span><span class="nv">$server_protocol</span><span class="p">;</span>
 
-<span class="k">fastcgi_param</span>  <span class="s">GATEWAY_INTERFACE</span>  <span class="s">CGI/1.1</span><span class="p">;</span>
-<span class="k">fastcgi_param</span>  <span class="s">SERVER_SOFTWARE</span>    <span class="s">nginx/</span><span class="nv">$nginx_version</span><span class="p">;</span>
+<span class="k">fastcgi_param</span><span class="w">  </span><span class="s">GATEWAY_INTERFACE</span><span class="w">  </span><span class="s">CGI/1.1</span><span class="p">;</span>
+<span class="k">fastcgi_param</span><span class="w">  </span><span class="s">SERVER_SOFTWARE</span><span class="w">    </span><span class="s">nginx/</span><span class="nv">$nginx_version</span><span class="p">;</span>
 
-<span class="k">fastcgi_param</span>  <span class="s">REMOTE_ADDR</span>        <span class="nv">$remote_addr</span><span class="p">;</span>
-<span class="k">fastcgi_param</span>  <span class="s">REMOTE_PORT</span>        <span class="nv">$remote_port</span><span class="p">;</span>
-<span class="k">fastcgi_param</span>  <span class="s">SERVER_ADDR</span>        <span class="nv">$server_addr</span><span class="p">;</span>
-<span class="k">fastcgi_param</span>  <span class="s">SERVER_PORT</span>        <span class="nv">$server_port</span><span class="p">;</span>
-<span class="k">fastcgi_param</span>  <span class="s">SERVER_NAME</span>        <span class="nv">$server_name</span><span class="p">;</span>
+<span class="k">fastcgi_param</span><span class="w">  </span><span class="s">REMOTE_ADDR</span><span class="w">        </span><span class="nv">$remote_addr</span><span class="p">;</span>
+<span class="k">fastcgi_param</span><span class="w">  </span><span class="s">REMOTE_PORT</span><span class="w">        </span><span class="nv">$remote_port</span><span class="p">;</span>
+<span class="k">fastcgi_param</span><span class="w">  </span><span class="s">SERVER_ADDR</span><span class="w">        </span><span class="nv">$server_addr</span><span class="p">;</span>
+<span class="k">fastcgi_param</span><span class="w">  </span><span class="s">SERVER_PORT</span><span class="w">        </span><span class="nv">$server_port</span><span class="p">;</span>
+<span class="k">fastcgi_param</span><span class="w">  </span><span class="s">SERVER_NAME</span><span class="w">        </span><span class="nv">$server_name</span><span class="p">;</span>
 
 <span class="c1"># PHP only, required if PHP was built with --enable-force-cgi-redirect</span>
-<span class="k">fastcgi_param</span>  <span class="s">REDIRECT_STATUS</span>    <span class="mi">200</span><span class="p">;</span>
-</pre></div>
-
+<span class="k">fastcgi_param</span><span class="w">  </span><span class="s">REDIRECT_STATUS</span><span class="w">    </span><span class="mi">200</span><span class="p">;</span>
+</code></pre></div>
 
 <h4 class="code_title">/etc/rc.conf</h4>
-<div class="codehilite"><pre><span class="nv">nginx_enable</span><span class="o">=</span>YES
-</pre></div>
-
+<div class="codehilite"><pre><span></span><code><span class="nv">nginx_enable</span><span class="o">=</span>YES
+</code></pre></div>
 
 <p>Start nginx with <code>service nginx start</code>.</p>
 <h4 id="php-fpm">PHP-FPM</h4>
 <p>PHP-FPM will start a daemon to listen for local connections from nginx. All that needs to be done for PHP-FPM is to configure it to listen on a UNIX socket and to enable it on boot.</p>
 <h4 class="code_title">/usr/local/etc/php-fpm.conf</h4>
-<div class="codehilite"><pre><span class="c1"># Replace listen lines with:</span>
-<span class="na">listen</span> <span class="o">=</span> <span class="s">/var/run/php-fpm-$pool.sock</span>
-<span class="na">listen.owner</span> <span class="o">=</span> <span class="s">www</span>
-<span class="na">listen.group</span> <span class="o">=</span> <span class="s">www</span>
-<span class="na">listen.mode</span> <span class="o">=</span> <span class="s">0660</span>
-</pre></div>
-
+<div class="codehilite"><pre><span></span><code><span class="c1"># Replace listen lines with:</span>
+<span class="na">listen</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">/var/run/php-fpm-$pool.sock</span>
+<span class="na">listen.owner</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">www</span>
+<span class="na">listen.group</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">www</span>
+<span class="na">listen.mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0660</span>
+</code></pre></div>
 
 <h4 class="code_title">/etc/rc.conf</h4>
-<div class="codehilite"><pre><span class="nv">php_fpm_enable</span><span class="o">=</span>YES
-</pre></div>
-
+<div class="codehilite"><pre><span></span><code><span class="nv">php_fpm_enable</span><span class="o">=</span>YES
+</code></pre></div>
 
 <p>Start PHP-FPM with <code>service php-fpm start</code>.</p>
 <h4 id="application">Application</h4>
 <p>Configure the application itself as needed.</p>
 <h2 id="updating-jails">Updating jails</h2>
 <p>Occasionally the jail&rsquo;s package can be updated from the host:</p>
-<div class="codehilite"><pre><span class="gp">root@host#</span> pkg -j blog upgrade
-</pre></div>
-
+<div class="codehilite"><pre><span></span><code><span class="gp">root@host# </span>pkg<span class="w"> </span>-j<span class="w"> </span>blog<span class="w"> </span>upgrade
+</code></pre></div>
 
 <h2 id="wrap-up">Wrap up</h2>
 <p>By moving each application into its own jail, security and performance can both be improved greatly. mod_php with Apache could be used but is much more heavyweight in each jail.</p>
@@ -391,15 +379,15 @@
   </div>
   <footer class="footer">
     
-    <p class="text-right">Copyright &copy; 2013-2015 Bryan Drewery</p></footer>
+    <p class="text-right">Copyright &copy; 2013-2024 Bryan Drewery</p></footer>
 </div>
 
 
     
 
 
-    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.2/js/bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
 
 <script type="text/javascript">

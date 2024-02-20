@@ -15,126 +15,122 @@
     <author>
       <name>Bryan Drewery</name>
     </author>
-    <content type="html">&lt;p&gt;This article appeared in the 2014 March/April edition of the &lt;a href=&quot;https://www.freebsdfoundation.org/journal&quot;&gt;FreeBSD Journal&lt;/a&gt;. It is presented in its original form and is not up-to-date.&lt;/p&gt;
-&lt;h1 id=&quot;poudriere&quot;&gt;Poudriere&lt;/h1&gt;
+    <content type="html">&lt;p&gt;This article appeared in the 2014 March/April edition of the &lt;a href=&#34;https://www.freebsdfoundation.org/journal&#34;&gt;FreeBSD Journal&lt;/a&gt;. It is presented in its original form and is not up-to-date.&lt;/p&gt;
+&lt;h1 id=&#34;poudriere&#34;&gt;Poudriere&lt;/h1&gt;
 &lt;p&gt;Stop using portmaster, portupgrade and ports on your servers and switch to packages.&lt;/p&gt;
-&lt;p&gt;Setting up your own package builds with Poudriere takes only a few minutes and will save you a lot of time in the future. 
-&lt;!--more--&gt;&lt;/p&gt;
-&lt;p&gt;Since November 2013, FreeBSD has provided official packages for Pkg, formerly known as pkgng. The 10.0 release also brought the first signed packages. The project uses &lt;a href=&quot;https://www.github.com/freebsd/poudriere&quot;&gt;Poudriere&lt;/a&gt; for package building. &lt;/p&gt;
-&lt;h2 id=&quot;why-use-packages&quot;&gt;Why Use Packages&lt;/h2&gt;
+&lt;p&gt;Setting up your own package builds with Poudriere takes only a few minutes and will save you a lot of time in the future. &lt;/p&gt;
+
+&lt;p&gt;Since November 2013, FreeBSD has provided official packages for Pkg, formerly known as pkgng. The 10.0 release also brought the first signed packages. The project uses &lt;a href=&#34;https://www.github.com/freebsd/poudriere&#34;&gt;Poudriere&lt;/a&gt; for package building. &lt;/p&gt;
+&lt;h2 id=&#34;why-use-packages&#34;&gt;Why Use Packages&lt;/h2&gt;
 &lt;p&gt;If you are maintaining more than one FreeBSD system and are not using packages already, you should. I maintain only 20 servers, but building ports on each system took a lot of my time and wasted resources on production machines. When building ports on multiple servers, it is very easy to get their options or versions out of sync. By building packages once on one system, I lessened the load on my systems, lessened the amount of work I had to do and made all my systems consistent. Instead of dealing with the same failure on each system, I only need to handle it on the build system.&lt;/p&gt;
 &lt;p&gt;Until Pkg was available, I never really considered using packages. The old style pkg_install packages were fine for initial system installation, but there was no built-in way to upgrade, except to remove all and install a new set. You had to use a tool such as portmaster or portupgrade and have an &lt;em&gt;INDEX&lt;/em&gt; or a ports tree checked out. These tools may appear to do a fine job with package upgrades, but they miss a lot and create extra work. Often when ports are updated, the &lt;strong&gt;PORTREVISION&lt;/strong&gt; is not bumped to force a package rebuild. This sometimes is forgotten or at other times is not practical, since thousands of ports would need to be bumped to chase a dependency update. Pkg handles this situation better than the old system. Pkg can also detect when the selected options for installed packages have changed from the available remote packages and will reinstall them automatically. The old tools would require recursively reinstalling packages sometimes and not others. There was too much manual work involved with the old package system. The goal of Pkg is to have a built-in upgrade process that removes manual intervention. There is still some work to do on removing some of the manual intervention, but it is already far better than the old system.&lt;/p&gt;
-&lt;h2 id=&quot;custom-package-options&quot;&gt;Custom Package Options&lt;/h2&gt;
+&lt;h2 id=&#34;custom-package-options&#34;&gt;Custom Package Options&lt;/h2&gt;
 &lt;p&gt;Why would you need to deviate from the official packages? The ports framework provides options support for ports to change build-time configuration. Not all applications support run-time configuration. Some applications must be compiled differently depending on which features are enabled. Others have options simply to lessen the amount of features and dependencies in the default port. For server administrators, this can quickly lead to finding that some of the default packages do not meet their requirements. One common example is that PHP comes in CGI mode by default without any support for apache+mod_php or the more flexible PHP-FPM. Another common issue with the default packages is that they come with X11 support which may be undesirable on non-desktop environments. Perhaps you have custom ports or custom patches for some ports. By building your own packages you regain control over which options packages are built with and how often updates are available.&lt;/p&gt;
 &lt;p&gt;Some other reasons to build your own packages are when you are dealing with restrictive licenses for which the FreeBSD project is unable to ship packages or if your system is highly customized and not ABI compatible with FreeBSD.&lt;/p&gt;
 &lt;p&gt;There are a few ways to get custom packages. Pkg supports using multiple repositories. It can be set up to use the official FreeBSD repository as a primary and a custom one as a secondary. Pkg is not limited by the number of repositories it can track and they can be reordered for priority. The problem with multiple repositories is that it can currently be difficult to maintain. When Pkg detects that an installed package has different options or dependencies from a repository it is tracking, the package will be reinstalled from potentially any remote version. You can either lock the package during upgrades with &lt;code&gt;pkg lock PKGNAME&lt;/code&gt; and &lt;code&gt;pkg unlock PKGNAME&lt;/code&gt; or bind it to a specific repository with &lt;code&gt;pkg annotate -A PKGNAME repository REPONAME&lt;/code&gt;. There is also the subtle problem of keeping the ports tree for your custom repository in sync with the FreeBSD packages. Since packages are built from a ports tree snapshot taken once a week, if your custom repository does not match it may lead to conflicts. It is much simpler to just build an entire package set of just what you need with the options that you want. On your systems you would only track your one repository and not include the FreeBSD one. This also has the benefit of using your own infrastructure for distributing packages which can speed up upgrades substantially.&lt;/p&gt;
-&lt;h2 id=&quot;building-packages&quot;&gt;Building Packages&lt;/h2&gt;
-&lt;p&gt;For the longest time &lt;a href=&quot;http://tinderbox.marcuscom.com/&quot;&gt;Tinderbox&lt;/a&gt; was the popular go-to tool for building packages. Other people would just install all ports on one system and then create packages from that system and copy them to other systems. This method is not recommended because the packages are created in an unclean environment that is constantly growing larger and more polluted. Even using portmaster with ports today and creating Pkg packages from those for distribution is not recommended for the same reasons. It is better to use a system designed for creating package sets.&lt;/p&gt;
-&lt;p&gt;&lt;a href=&quot;https://www.github.com/freebsd/poudriere&quot;&gt;Poudriere&lt;/a&gt; (roughly pronounced poo-dree-year, French for &amp;ldquo;powder keg&amp;rdquo;) was written as a faster and simpler replacement for Tinderbox. It was written by the Pkg author Baptiste Daroussin and is now mostly maintained by me along with Baptiste and some other contributors. It has quickly become the de-facto FreeBSD port testing and package building tool. It is the official build cluster tool and is also used by the FreeBSD Ports project for testing sweeping patches in what are called &amp;ldquo;exp-runs&amp;rdquo;. It is written in POSIX shell and is slowly being moved to C components. Unlike Tinderbox, it has no dependencies and does not require a database. It has been greatly optimized to be highly parallel in all operations. It uses jails to build ports in sandboxed environments in very strict conditions. Jail creation is done once with a simple command. During builds, the jail is cloned automatically for each CPU being used to give ports a clean place to build. Builds can occur on UFS, ZFS or the TMPFS file systems. UFS being high I/O, low RAM, slow build and TMPFS being low I/O, high RAM and very fast build. It is also configurable such that only some parts of the build use TMPFS while others use UFS/ZFS to allow some compromise on lower memory machines. An amd64 host can also build i386 packages with no extra effort. Packages can be built for the current host version or older. For example, if the host machine is 9.2, it can build 9.2, 9.1 and 8.3 package sets.&lt;/p&gt;
-&lt;p&gt;Poudriere does incremental builds by default to only rebuild what is needed. The incremental build checks for changed options, missing dependencies, changed dependencies, new versions, and changed pkgnames. If any of those changed then it will rebuild that port. This also causes anything depending on that port to be rebuilt. This is sometimes overkill but ensures that no port change is missed in package creation. There is also built-in &lt;a href=&quot;https://ccache.samba.org/&quot;&gt;ccache&lt;/a&gt; support which can help port rebuilding time when dependencies change. Build times of package sets vary, but on a system with multiple CPU and enough RAM, a few hundred ports can typically build in an hour or two.&lt;/p&gt;
+&lt;h2 id=&#34;building-packages&#34;&gt;Building Packages&lt;/h2&gt;
+&lt;p&gt;For the longest time &lt;a href=&#34;http://tinderbox.marcuscom.com/&#34;&gt;Tinderbox&lt;/a&gt; was the popular go-to tool for building packages. Other people would just install all ports on one system and then create packages from that system and copy them to other systems. This method is not recommended because the packages are created in an unclean environment that is constantly growing larger and more polluted. Even using portmaster with ports today and creating Pkg packages from those for distribution is not recommended for the same reasons. It is better to use a system designed for creating package sets.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.github.com/freebsd/poudriere&#34;&gt;Poudriere&lt;/a&gt; (roughly pronounced poo-dree-year, French for &amp;ldquo;powder keg&amp;rdquo;) was written as a faster and simpler replacement for Tinderbox. It was written by the Pkg author Baptiste Daroussin and is now mostly maintained by me along with Baptiste and some other contributors. It has quickly become the de-facto FreeBSD port testing and package building tool. It is the official build cluster tool and is also used by the FreeBSD Ports project for testing sweeping patches in what are called &amp;ldquo;exp-runs&amp;rdquo;. It is written in POSIX shell and is slowly being moved to C components. Unlike Tinderbox, it has no dependencies and does not require a database. It has been greatly optimized to be highly parallel in all operations. It uses jails to build ports in sandboxed environments in very strict conditions. Jail creation is done once with a simple command. During builds, the jail is cloned automatically for each CPU being used to give ports a clean place to build. Builds can occur on UFS, ZFS or the TMPFS file systems. UFS being high I/O, low RAM, slow build and TMPFS being low I/O, high RAM and very fast build. It is also configurable such that only some parts of the build use TMPFS while others use UFS/ZFS to allow some compromise on lower memory machines. An amd64 host can also build i386 packages with no extra effort. Packages can be built for the current host version or older. For example, if the host machine is 9.2, it can build 9.2, 9.1 and 8.3 package sets.&lt;/p&gt;
+&lt;p&gt;Poudriere does incremental builds by default to only rebuild what is needed. The incremental build checks for changed options, missing dependencies, changed dependencies, new versions, and changed pkgnames. If any of those changed then it will rebuild that port. This also causes anything depending on that port to be rebuilt. This is sometimes overkill but ensures that no port change is missed in package creation. There is also built-in &lt;a href=&#34;https://ccache.samba.org/&#34;&gt;ccache&lt;/a&gt; support which can help port rebuilding time when dependencies change. Build times of package sets vary, but on a system with multiple CPU and enough RAM, a few hundred ports can typically build in an hour or two.&lt;/p&gt;
 &lt;p&gt;Poudriere has a read-only real-time web interface that allows monitoring the status of builds. This interface does not require any server-side CGI or scripting support as Poudriere just writes out a status file in JSON and then web interface uses it. It is not as nice as the Tinderbox interface, but there are plans to improve it more in the future. The 3.1 version is incrementally improved to be more responsive and allow searching and sorting each sub-list of packages.&lt;/p&gt;
-&lt;p&gt;&lt;img width=&quot;700px&quot; src=&quot;/static/poudriere-31.png&quot; alt=&quot;Poudriere 3.1 web interface preview.&quot;&gt;
+&lt;p&gt;&lt;img width=&#34;700px&#34; src=&#34;/static/poudriere-31.png&#34; alt=&#34;Poudriere 3.1 web interface preview.&#34;&gt;
 &lt;strong&gt;Poudriere 3.1 web interface preview.&lt;/strong&gt;&lt;/p&gt;
 &lt;p&gt;Poudriere also has a feature called a &amp;ldquo;set&amp;rdquo;. This allows having multiple saved options, &lt;em&gt;make.conf&lt;/em&gt; files and resulting package sets for each named &amp;ldquo;set&amp;rdquo;. This removes the need to have multiple jails for the same target version/architecture. For example, this can be used to create a PHP 5.3 package set named &amp;ldquo;php53&amp;rdquo; and a PHP 5.5 package set named &amp;ldquo;php55&amp;rdquo; using one jail on the build system. When building the set would be specified with &lt;code&gt;-z setname&lt;/code&gt;, i.e. &lt;code&gt;bulk -z php53 -j 91amd64&lt;/code&gt; would produce packages in &lt;em&gt;/usr/local/poudriere/data/packages/91amd64-default-91amd64&lt;/em&gt;. The &amp;ldquo;default&amp;rdquo; refers to the ports tree, which can also be changed with the &lt;code&gt;-p&lt;/code&gt; option.&lt;/p&gt;
 &lt;p&gt;The upcoming Poudriere 3.1 release also brings some interesting new features. One of the major ones is named &lt;strong&gt;ATOMIC_PACKAGE_REPOSITORY&lt;/strong&gt;. It prevents the repository from being modified until a build is completed. Currently in 3.0 the repository has packages deleted at startup and packages being modified during build, thus disallowing serving it directly over http. This is enabled by default. It works by hard-link copying the package directory into a .building directory during startup, then when the build completes the .building directory is renamed to a &lt;em&gt;.real_TIMESTAMP&lt;/em&gt; directory and the top-level &lt;em&gt;.latest&lt;/em&gt; symlink in the repository is updated to point to the new build. There are still potential problems with changing the repository during a pkg upgrade job, but the window for problems is far smaller than without this.&lt;/p&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;go&quot;&gt;/usr/packages/exp-91amd64-commit-test # ls -al&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;total 13&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;drwxr-xr-x   7 root  wheel  12 Mar  2 01:59 ./&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;drwxr-x--x  26 root  wheel  32 Mar  2 01:13 ../&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;lrwxr-xr-x   1 root  wheel  16 Mar  2 01:59 .latest@ -&amp;gt; .real_1393747164&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;drwxr-xr-x   4 root  wheel   7 Mar  1 16:59 .real_1393714735/&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;drwxr-xr-x   4 root  wheel   7 Mar  2 00:40 .real_1393742366/&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;drwxr-xr-x   4 root  wheel   7 Mar  2 00:58 .real_1393743542/&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;drwxr-xr-x   4 root  wheel   7 Mar  2 01:05 .real_1393743901/&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;drwxr-xr-x   4 root  wheel   7 Mar  2 02:00 .real_1393747164/&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;lrwxr-xr-x   1 root  wheel  11 Nov 19 17:20 All@ -&amp;gt; .latest/All&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;lrwxr-xr-x   1 root  wheel  14 Nov 19 17:20 Latest@ -&amp;gt; .latest/Latest&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;lrwxr-xr-x   1 root  wheel  19 Nov 19 17:20 digests.txz@ -&amp;gt; .latest/digests.txz&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;lrwxr-xr-x   1 root  wheel  23 Nov 19 17:20 packagesite.txz@ -&amp;gt; .latest/packagesite.txz&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;go&#34;&gt;/usr/packages/exp-91amd64-commit-test # ls -al&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;total 13&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;drwxr-xr-x   7 root  wheel  12 Mar  2 01:59 ./&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;drwxr-x--x  26 root  wheel  32 Mar  2 01:13 ../&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;lrwxr-xr-x   1 root  wheel  16 Mar  2 01:59 .latest@ -&amp;gt; .real_1393747164&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;drwxr-xr-x   4 root  wheel   7 Mar  1 16:59 .real_1393714735/&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;drwxr-xr-x   4 root  wheel   7 Mar  2 00:40 .real_1393742366/&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;drwxr-xr-x   4 root  wheel   7 Mar  2 00:58 .real_1393743542/&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;drwxr-xr-x   4 root  wheel   7 Mar  2 01:05 .real_1393743901/&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;drwxr-xr-x   4 root  wheel   7 Mar  2 02:00 .real_1393747164/&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;lrwxr-xr-x   1 root  wheel  11 Nov 19 17:20 All@ -&amp;gt; .latest/All&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;lrwxr-xr-x   1 root  wheel  14 Nov 19 17:20 Latest@ -&amp;gt; .latest/Latest&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;lrwxr-xr-x   1 root  wheel  19 Nov 19 17:20 digests.txz@ -&amp;gt; .latest/digests.txz&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;lrwxr-xr-x   1 root  wheel  23 Nov 19 17:20 packagesite.txz@ -&amp;gt; .latest/packagesite.txz&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
 &lt;p&gt;This feature also allows doing dry-runs with bulk to see what would be done by using &lt;code&gt;bulk -n&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;Atomic package repository also allows keeping old package sets. This is not enabled by default but can be enabled by setting &lt;strong&gt;KEEP_OLD_PACKAGES&lt;/strong&gt; and &lt;strong&gt;KEEP_OLD_PACKAGES_COUNT&lt;/strong&gt;. By default 5 sets are kept. With this you could rollback a system by changing the .latest symlink to an old set and then running &lt;code&gt;pkg upgrade -f&lt;/code&gt; on a server force it to reinstall all packages from the remote repository. This would downgrade all to the old set.&lt;/p&gt;
 &lt;p&gt;Another upcoming feature for 3.1 is named poudriered. It will allow non-root usage of poudriere through a socket to a root daemon. This will allow queueing jobs, as well as queueing a job for all jails. It is configurable in a similar way as sudo to be able to restrict subcommands and even arguments to specific users and groups. More improvements, such as daemon privilege separation, are planned for 3.2/4.0.&lt;/p&gt;
 &lt;p&gt;Setup and usage of poudriere is simple and fast. Install poudriere, create a jail, checkout a ports tree, create a file with a list of ports, optionally create a private/public keypair for a signed repository and then build!&lt;/p&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;go&quot;&gt;$ pkg install ports-mgmt/poudriere&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;$ cp /usr/local/etc/poudriere.conf.sample /usr/local/etc/poudriere.conf&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;# Modify configuration.&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;$ vim /usr/local/etc/poudriere.conf&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;# Create a ports tree in /usr/local/poudriere/ports/default&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;$ poudriere ports -c -m svn+https&lt;/span&gt;
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;gp&#34;&gt;$ &lt;/span&gt;pkg&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;install&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;ports-mgmt/poudriere
+&lt;span class=&#34;gp&#34;&gt;$ &lt;/span&gt;cp&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;/usr/local/etc/poudriere.conf.sample&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;/usr/local/etc/poudriere.conf
+&lt;span class=&#34;gp&#34;&gt;# &lt;/span&gt;Modify&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;configuration.
+&lt;span class=&#34;gp&#34;&gt;$ &lt;/span&gt;vim&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;/usr/local/etc/poudriere.conf
+&lt;span class=&#34;gp&#34;&gt;# &lt;/span&gt;Create&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;a&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;ports&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;tree&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;k&#34;&gt;in&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;/usr/local/poudriere/ports/default
+&lt;span class=&#34;gp&#34;&gt;$ &lt;/span&gt;poudriere&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;ports&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-c&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-m&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;svn+https
 
-&lt;span class=&quot;go&quot;&gt;# Create a jail from a snapshot&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;$ poudriere -j 10amd64 -v 10.0-RELEASE -a amd64&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;# Create a head jail from src&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;$ poudriere -j head-amd64 -v head -a amd64 -m svn+https&lt;/span&gt;
+&lt;span class=&#34;gp&#34;&gt;# &lt;/span&gt;Create&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;a&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;jail&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;from&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;a&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;snapshot
+&lt;span class=&#34;gp&#34;&gt;$ &lt;/span&gt;poudriere&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-j&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;10amd64&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-v&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;m&#34;&gt;10&lt;/span&gt;.0-RELEASE&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-a&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;amd64
+&lt;span class=&#34;gp&#34;&gt;# &lt;/span&gt;Create&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;a&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;head&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;jail&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;from&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;src
+&lt;span class=&#34;gp&#34;&gt;$ &lt;/span&gt;poudriere&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-j&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;head-amd64&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-v&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;head&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-a&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;amd64&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-m&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;svn+https
 
-&lt;span class=&quot;go&quot;&gt;# Create a list of port origins (cat/port), 1 per line.&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;$ vim /usr/local/etc/poudriere.d/ports.list&lt;/span&gt;
+&lt;span class=&#34;gp&#34;&gt;# &lt;/span&gt;Create&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;a&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;list&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;of&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;port&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;origins&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;o&#34;&gt;(&lt;/span&gt;cat/port&lt;span class=&#34;o&#34;&gt;)&lt;/span&gt;,&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;m&#34;&gt;1&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;per&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;line.
+&lt;span class=&#34;gp&#34;&gt;$ &lt;/span&gt;vim&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;/usr/local/etc/poudriere.d/ports.list
 
-&lt;span class=&quot;go&quot;&gt;# Create a public/private keypair for the repository&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;$ cd /etc/ssl&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;$ openssl genrsa -out repo.key 2048&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;$ chmod 0400 repo.key&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;$ openssl rsa -in repo.key -out repo.pub -pubout&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;# Configure poudriere to use your public key&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;$ echo &amp;quot;PKG_REPO_SIGNING_KEY=/etc/ssl/repo.key&amp;quot; &amp;gt;&amp;gt; /usr/local/etc/poudriere.conf&lt;/span&gt;
+&lt;span class=&#34;gp&#34;&gt;# &lt;/span&gt;Create&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;a&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;public/private&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;keypair&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;k&#34;&gt;for&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;the&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;repository
+&lt;span class=&#34;gp&#34;&gt;$ &lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;cd&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;/etc/ssl
+&lt;span class=&#34;gp&#34;&gt;$ &lt;/span&gt;openssl&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;genrsa&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-out&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;repo.key&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;m&#34;&gt;2048&lt;/span&gt;
+&lt;span class=&#34;gp&#34;&gt;$ &lt;/span&gt;chmod&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;m&#34;&gt;0400&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;repo.key
+&lt;span class=&#34;gp&#34;&gt;$ &lt;/span&gt;openssl&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;rsa&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-in&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;repo.key&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-out&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;repo.pub&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-pubout
+&lt;span class=&#34;gp&#34;&gt;# &lt;/span&gt;Configure&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;poudriere&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;to&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;use&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;your&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;public&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;key
+&lt;span class=&#34;gp&#34;&gt;$ &lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;echo&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;s2&#34;&gt;&amp;quot;PKG_REPO_SIGNING_KEY=/etc/ssl/repo.key&amp;quot;&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&amp;gt;&amp;gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;/usr/local/etc/poudriere.conf
 
-&lt;span class=&quot;go&quot;&gt;# Create a make.conf&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;$ echo &amp;quot;WITH_PKGNG=yes&amp;quot; &amp;gt;&amp;gt; /usr/local/etc/poudriere.d/make.conf&lt;/span&gt;
+&lt;span class=&#34;gp&#34;&gt;# &lt;/span&gt;Create&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;a&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;make.conf
+&lt;span class=&#34;gp&#34;&gt;$ &lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;echo&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;s2&#34;&gt;&amp;quot;WITH_PKGNG=yes&amp;quot;&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&amp;gt;&amp;gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;/usr/local/etc/poudriere.d/make.conf
 
-&lt;span class=&quot;go&quot;&gt;# Configure options for the build&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;$ poudriere options -f /usr/local/etc/poudriere.d/ports.list&lt;/span&gt;
+&lt;span class=&#34;gp&#34;&gt;# &lt;/span&gt;Configure&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;options&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;k&#34;&gt;for&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;the&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;build
+&lt;span class=&#34;gp&#34;&gt;$ &lt;/span&gt;poudriere&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;options&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-f&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;/usr/local/etc/poudriere.d/ports.list
 
-&lt;span class=&quot;go&quot;&gt;# Build packages&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;$ poudriere bulk -j 91amd64 -f /usr/local/etc/poudriere.d/ports.list&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
+&lt;span class=&#34;gp&#34;&gt;# &lt;/span&gt;Build&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;packages
+&lt;span class=&#34;gp&#34;&gt;$ &lt;/span&gt;poudriere&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;bulk&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-j&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;91amd64&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-f&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;/usr/local/etc/poudriere.d/ports.list
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
 &lt;p&gt;If you need to build multiple sets, then you should use the &lt;code&gt;-z&lt;/code&gt; flag when using &amp;ldquo;options&amp;rdquo;, and &lt;code&gt;bulk&lt;/code&gt; commands, and also setup a &lt;em&gt;SET-make.conf&lt;/em&gt; in &lt;em&gt;/usr/local/etc/poudriere.d&lt;/em&gt; with any set-specific configuration.&lt;/p&gt;
-&lt;p&gt;The official Poudriere site has a guide for &lt;a href=&quot;https://github.com/freebsd/poudriere/wiki/pkg_repos&quot;&gt;creating and maintaining repositories&lt;/a&gt;. The manual page is also online &lt;a href=&quot;https://github.com/freebsd/poudriere/wiki/poudriere.8&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;There is a guide for using &lt;a href=&quot;http://jenkins-ci.org/&quot;&gt;Jenkins&lt;/a&gt; to do scheduled builds of packages which is documented well in a 3 part series &lt;a href=&quot;http://www.unix-heaven.org/node/62&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;
-&lt;h2 id=&quot;how-freebsd-builds-packages&quot;&gt;How FreeBSD Builds Packages&lt;/h2&gt;
-&lt;p&gt;The FreeBSD project used to build packages only for releases and occasionally for the STABLE branches. The old package builders used a distributed system named Portbuild. It would use a large cluster of smaller 2GB-4GB machines to build packages. This was error-prone and slow, mostly due to the older machines. A full build could still take a week. Today packages are built using single large machines using Poudriere. The &lt;a href=&quot;https://www.freebsdfoundation.org/&quot;&gt;FreeBSD Foundation&lt;/a&gt; was nice enough to purchase several 24-32 CPU 96GB machines to replace the old cluster. Using the new systems with Poudriere the entire ports tree can be built from scratch in about 16 hours on one machine.&lt;/p&gt;
-&lt;p&gt;Packages are built for the oldest release of each branch. These packages are supposed to be ABI/KBI compatible with all future releases on those branches as well as the STABLE branch for that release. This means that packages built for 8.3 will work on 8.4 but are not guaranteed to work on 9.x. For official FreeBSD package builds, every Tuesday night a snapshot of the ports tree is made and packages begin building. Currently packages are built from 8.3, 9.1, 10.0, and head for i386 and amd64. The quarterly ports branch is also built for 10.0 on both i386 and amd64. This adds up to 10 separate package sets that must be built each week. We split these into 2 separate servers, one for i386 and the other for amd64. Not all 24,000 ports are built every week for every set, since Poudriere is smart enough to only build what needs to be rebuilt. It takes just a few days for all sets to be built. After each individual package set is built, its repository is generated and signed by our signing server. An example of how we sign packages is in the &lt;a href=&quot;http://www.freebsd.org/cgi/man.cgi?query=pkg-repo&amp;amp;sektion=8&quot;&gt;pkg-repo.8&lt;/a&gt; manual page. Then the packages are uploaded, using rsync, to our content delivery network for public consumption.&lt;/p&gt;
-&lt;h2 id=&quot;meta-packages&quot;&gt;Meta Packages&lt;/h2&gt;
+&lt;p&gt;The official Poudriere site has a guide for &lt;a href=&#34;https://github.com/freebsd/poudriere/wiki/pkg_repos&#34;&gt;creating and maintaining repositories&lt;/a&gt;. The manual page is also online &lt;a href=&#34;https://github.com/freebsd/poudriere/wiki/poudriere.8&#34;&gt;here&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;There is a guide for using &lt;a href=&#34;http://jenkins-ci.org/&#34;&gt;Jenkins&lt;/a&gt; to do scheduled builds of packages which is documented well in a 3 part series &lt;a href=&#34;http://www.unix-heaven.org/node/62&#34;&gt;here&lt;/a&gt;.&lt;/p&gt;
+&lt;h2 id=&#34;how-freebsd-builds-packages&#34;&gt;How FreeBSD Builds Packages&lt;/h2&gt;
+&lt;p&gt;The FreeBSD project used to build packages only for releases and occasionally for the STABLE branches. The old package builders used a distributed system named Portbuild. It would use a large cluster of smaller 2GB-4GB machines to build packages. This was error-prone and slow, mostly due to the older machines. A full build could still take a week. Today packages are built using single large machines using Poudriere. The &lt;a href=&#34;https://www.freebsdfoundation.org/&#34;&gt;FreeBSD Foundation&lt;/a&gt; was nice enough to purchase several 24-32 CPU 96GB machines to replace the old cluster. Using the new systems with Poudriere the entire ports tree can be built from scratch in about 16 hours on one machine.&lt;/p&gt;
+&lt;p&gt;Packages are built for the oldest release of each branch. These packages are supposed to be ABI/KBI compatible with all future releases on those branches as well as the STABLE branch for that release. This means that packages built for 8.3 will work on 8.4 but are not guaranteed to work on 9.x. For official FreeBSD package builds, every Tuesday night a snapshot of the ports tree is made and packages begin building. Currently packages are built from 8.3, 9.1, 10.0, and head for i386 and amd64. The quarterly ports branch is also built for 10.0 on both i386 and amd64. This adds up to 10 separate package sets that must be built each week. We split these into 2 separate servers, one for i386 and the other for amd64. Not all 24,000 ports are built every week for every set, since Poudriere is smart enough to only build what needs to be rebuilt. It takes just a few days for all sets to be built. After each individual package set is built, its repository is generated and signed by our signing server. An example of how we sign packages is in the &lt;a href=&#34;http://www.freebsd.org/cgi/man.cgi?query=pkg-repo&amp;amp;sektion=8&#34;&gt;pkg-repo.8&lt;/a&gt; manual page. Then the packages are uploaded, using rsync, to our content delivery network for public consumption.&lt;/p&gt;
+&lt;h2 id=&#34;meta-packages&#34;&gt;Meta Packages&lt;/h2&gt;
 &lt;p&gt;For managing my servers I use meta-packages. These are packages that only depend on other packages and do not install any files themselves. They can be created from a port that does no actual building. By installing meta-packages onto your servers, you guarantee that each server will have the same packages installed as long as they each install only the few meta-packages you create.  Using meta-packages also makes removing unneeded packages much simpler. Pkg has a feature that tracks which packages have specifically requested be installed and which were pulled in automatically as dependencies. If you were to type &lt;code&gt;pkg install&lt;/code&gt; for all packages on a system, then &lt;code&gt;pkg autoremove&lt;/code&gt; would never remove anything. If instead you were to only install the one meta-package and it pulled in 100 dependencies, then in the future updated the meta-package to no longer require some other package, &lt;code&gt;pkg autoremove&lt;/code&gt; would properly detect and remove that package.&lt;/p&gt;
-&lt;p&gt;I take this a step further and have role-based meta-packages. For example, I have a base meta-package that contains all packages that all my servers need. This would be things such as the configuration management tool. I then have meta-packages for each type of server that depend on only what it needs and the base meta-package. For example, my DNS server uses the dns-server meta-package that depends on bind and some other DNS tools and the base meta-package. My web application jails all have a web-server meta-package that depend on PHP, nginx and the base meta-package. This simplifies management on the servers as only a handful of packages need to be explicitly installed and monitored. My method is to use a ports tree overlay to create my meta-packages, but you could also just create the packages directly by using the pkg manifest format. For the ports tree overlay I just rsync my git-tracked tree over the top of an SVN checkout of ports. For Poudriere only the meta-packages need to be specified to build and it will then build all needed dependencies as well. I have a guide on my blog for &lt;a href=&quot;/posts/2013-07-21-managing-role-based-freebsd-servers-with-meta-packages-and-poudriere&quot;&gt;managing role based servers with meta-packages&lt;/a&gt;.&lt;/p&gt;
-&lt;h2 id=&quot;deployment&quot;&gt;Deployment&lt;/h2&gt;
-&lt;p&gt;The official FreeBSD package URL uses an &lt;a href=&quot;https://en.wikipedia.org/wiki/SRV_record&quot;&gt;SRV&lt;/a&gt; DNS record to advertise which mirrors are available, but otherwise is just plain HTTP. If your network is completely internal then there is not much to do for deployment. All that is needed is an internal FTP or HTTP server to serve up the package repository. The servers I host are spread out all over the world and are not in one network. At first I tried using just one HTTP server for serving the packages, but quickly found that updating all of them at once would severely slow everything down. If you have a large pipe this may still be an option. I ended up using &lt;a href=&quot;https://aws.amazon.com/s3/&quot;&gt;Amazon S3&lt;/a&gt; and have had a much better experience. I have a simple wrapper for my build that runs Poudriere and then runs &lt;a href=&quot;https://www.freshports.org/net/py-s3cmd/&quot;&gt;s3sync&lt;/a&gt; to upload the packages. I host 5GB of package sets on there and update servers weekly. This comes out to just a few dollars or less a month for updating my 20 servers.&lt;/p&gt;
+&lt;p&gt;I take this a step further and have role-based meta-packages. For example, I have a base meta-package that contains all packages that all my servers need. This would be things such as the configuration management tool. I then have meta-packages for each type of server that depend on only what it needs and the base meta-package. For example, my DNS server uses the dns-server meta-package that depends on bind and some other DNS tools and the base meta-package. My web application jails all have a web-server meta-package that depend on PHP, nginx and the base meta-package. This simplifies management on the servers as only a handful of packages need to be explicitly installed and monitored. My method is to use a ports tree overlay to create my meta-packages, but you could also just create the packages directly by using the pkg manifest format. For the ports tree overlay I just rsync my git-tracked tree over the top of an SVN checkout of ports. For Poudriere only the meta-packages need to be specified to build and it will then build all needed dependencies as well. I have a guide on my blog for &lt;a href=&#34;/posts/2013-07-21-managing-role-based-freebsd-servers-with-meta-packages-and-poudriere&#34;&gt;managing role based servers with meta-packages&lt;/a&gt;.&lt;/p&gt;
+&lt;h2 id=&#34;deployment&#34;&gt;Deployment&lt;/h2&gt;
+&lt;p&gt;The official FreeBSD package URL uses an &lt;a href=&#34;https://en.wikipedia.org/wiki/SRV_record&#34;&gt;SRV&lt;/a&gt; DNS record to advertise which mirrors are available, but otherwise is just plain HTTP. If your network is completely internal then there is not much to do for deployment. All that is needed is an internal FTP or HTTP server to serve up the package repository. The servers I host are spread out all over the world and are not in one network. At first I tried using just one HTTP server for serving the packages, but quickly found that updating all of them at once would severely slow everything down. If you have a large pipe this may still be an option. I ended up using &lt;a href=&#34;https://aws.amazon.com/s3/&#34;&gt;Amazon S3&lt;/a&gt; and have had a much better experience. I have a simple wrapper for my build that runs Poudriere and then runs &lt;a href=&#34;https://www.freshports.org/net/py-s3cmd/&#34;&gt;s3sync&lt;/a&gt; to upload the packages. I host 5GB of package sets on there and update servers weekly. This comes out to just a few dollars or less a month for updating my 20 servers.&lt;/p&gt;
 &lt;p&gt;To configure a server to use your repository, create a &lt;em&gt;/usr/local/etc/pkg/repos/MYREPO.conf&lt;/em&gt; file, and also place your repository public key in &lt;em&gt;/usr/local/etc/pkg/repos/MYREPO.pem&lt;/em&gt;:&lt;/p&gt;
-&lt;h4 class=&quot;code_title&quot;&gt;/usr/local/etc/pkg/repos/MYREPO.conf&lt;/h4&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;l-Scalar-Plain&quot;&gt;MYREPO&lt;/span&gt;&lt;span class=&quot;p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p-Indicator&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;nv&quot;&gt;url&lt;/span&gt;&lt;span class=&quot;p-Indicator&quot;&gt;:&lt;/span&gt;     &lt;span class=&quot;s&quot;&gt;&amp;quot;http://url.to.your.repository/${ABI}&amp;quot;&lt;/span&gt;&lt;span class=&quot;p-Indicator&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;nv&quot;&gt;enabled&lt;/span&gt;&lt;span class=&quot;p-Indicator&quot;&gt;:&lt;/span&gt;  &lt;span class=&quot;nv&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p-Indicator&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;nv&quot;&gt;signature_type&lt;/span&gt;&lt;span class=&quot;p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;pubkey&amp;quot;&lt;/span&gt;&lt;span class=&quot;p-Indicator&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;nv&quot;&gt;pubkey&lt;/span&gt;&lt;span class=&quot;p-Indicator&quot;&gt;:&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;&amp;quot;/usr/local/etc/pkg/repos/MYREPO.pem&amp;quot;&lt;/span&gt;
-&lt;span class=&quot;p-Indicator&quot;&gt;}&lt;/span&gt;
+&lt;h4 class=&#34;code_title&#34;&gt;/usr/local/etc/pkg/repos/MYREPO.conf&lt;/h4&gt;
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;nt&#34;&gt;MYREPO&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;p p-Indicator&#34;&gt;{&lt;/span&gt;
+&lt;span class=&#34;nt&#34;&gt;  url&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;     &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;&amp;quot;http://url.to.your.repository/${ABI}&amp;quot;&lt;/span&gt;&lt;span class=&#34;p p-Indicator&#34;&gt;,&lt;/span&gt;
+&lt;span class=&#34;nt&#34;&gt;  enabled&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;true&lt;/span&gt;&lt;span class=&#34;p p-Indicator&#34;&gt;,&lt;/span&gt;
+&lt;span class=&#34;nt&#34;&gt;  signature_type&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;&amp;quot;pubkey&amp;quot;&lt;/span&gt;&lt;span class=&#34;p p-Indicator&#34;&gt;,&lt;/span&gt;
+&lt;span class=&#34;nt&#34;&gt;  pubkey&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;&amp;quot;/usr/local/etc/pkg/repos/MYREPO.pem&amp;quot;&lt;/span&gt;
+&lt;span class=&#34;p p-Indicator&#34;&gt;}&lt;/span&gt;
 
-&lt;span class=&quot;c1&quot;&gt;# Optionally disable the FreeBSD repo.&lt;/span&gt;
-&lt;span class=&quot;l-Scalar-Plain&quot;&gt;FreeBSD&lt;/span&gt;&lt;span class=&quot;p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p-Indicator&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;nv&quot;&gt;enabled&lt;/span&gt;&lt;span class=&quot;p-Indicator&quot;&gt;:&lt;/span&gt;  &lt;span class=&quot;nv&quot;&gt;false&lt;/span&gt;
-&lt;span class=&quot;p-Indicator&quot;&gt;}&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
+&lt;span class=&#34;c1&#34;&gt;# Optionally disable the FreeBSD repo.&lt;/span&gt;
+&lt;span class=&#34;nt&#34;&gt;FreeBSD&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;p p-Indicator&#34;&gt;{&lt;/span&gt;
+&lt;span class=&#34;nt&#34;&gt;  enabled&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;false&lt;/span&gt;
+&lt;span class=&#34;p p-Indicator&#34;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
 &lt;p&gt;This configuration requires setup of ABI symlinks in the repository. This is a one-time operation. It allows you to use the same repository configuration on all servers without changing which release and arch it uses. Pkg will change the value of ABI when it fetches packages. It should look something like this:&lt;/p&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;go&quot;&gt;# ls -al /usr/local/poudriere/data/packages&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;total 19&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;drwxr-xr-x   7 root  wheel  15 Jul 11  2013 ./&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;drwxr-x--x  26 root  wheel  32 Mar  2 01:13 ../&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;drwxr-xr-x   2 root  wheel   2 Jul  8  2013 10amd64/&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;drwxr-xr-x   7 root  wheel  39 Mar  2 10:05 83amd64/&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;drwxr-xr-x   7 root  wheel  39 Mar  2 10:30 83i386/&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;lrwxr-xr-x   1 root  wheel   7 Jul  8  2013 freebsd:10:x86:64@ -&amp;gt; 10amd64&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;lrwxr-xr-x   1 root  wheel   6 Jan 26  2013 freebsd:8:x86:32@ -&amp;gt; 83i386&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;lrwxr-xr-x   1 root  wheel   7 Jan 26  2013 freebsd:8:x86:64@ -&amp;gt; 83amd64&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;gp&#34;&gt;# &lt;/span&gt;ls&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-al&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;/usr/local/poudriere/data/packages
+&lt;span class=&#34;go&#34;&gt;total 19&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;drwxr-xr-x   7 root  wheel  15 Jul 11  2013 ./&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;drwxr-x--x  26 root  wheel  32 Mar  2 01:13 ../&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;drwxr-xr-x   2 root  wheel   2 Jul  8  2013 10amd64/&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;drwxr-xr-x   7 root  wheel  39 Mar  2 10:05 83amd64/&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;drwxr-xr-x   7 root  wheel  39 Mar  2 10:30 83i386/&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;lrwxr-xr-x   1 root  wheel   7 Jul  8  2013 freebsd:10:x86:64@ -&amp;gt; 10amd64&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;lrwxr-xr-x   1 root  wheel   6 Jan 26  2013 freebsd:8:x86:32@ -&amp;gt; 83i386&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;lrwxr-xr-x   1 root  wheel   7 Jan 26  2013 freebsd:8:x86:64@ -&amp;gt; 83amd64&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
-
-&lt;p&gt;As for keeping servers up-to-date, since I am a Ports committer and also a Pkg developer, I like to observe all upgrades that I can to find any issues. I&amp;rsquo;m also just paranoid and like to make sure upgrades go smoothly, so I manually run &lt;code&gt;pkg upgrade&lt;/code&gt; on my servers and don&amp;rsquo;t use an automated crontab for it. My systems have a lot of applications built outside of ports, so I must save shared libraries until those applications can be rebuilt. This is similar to what portupgrade and portmaster with the &lt;code&gt;-p&lt;/code&gt; flag do. An example of this can found on my &lt;a href=&quot;https://gist.github.com/bdrewery/3099160&quot;&gt;github&lt;/a&gt;. Manually running my upgrade script  is not a problem for me since I only maintain a handful of servers. However, Pkg is supported by &lt;a href=&quot;https://forge.puppetlabs.com/zleslie/pkgng&quot;&gt;puppet&lt;/a&gt;, &lt;a href=&quot;http://docs.saltstack.com/ref/modules/all/salt.modules.pkgng.html&quot;&gt;salt&lt;/a&gt; and &lt;a href=&quot;https://github.com/ansible/ansible/pull/2883&quot;&gt;ansible&lt;/a&gt;. Do be warned though that some manual intervention is still required with package upgrades occasionally. This usually only occurs anymore when the origin of a package changes and requires running &lt;code&gt;pkg set -o old/origin:new/origin&lt;/code&gt;. The most common case is when something like Perl is updated. You can detect this case and other cases of conflicting packages in a script by running &lt;code&gt;pkg upgrade -Fy&lt;/code&gt; which will list all conflicting packages in the upgrade. The ports framework and Pkg currently do not have a means to handle replaced packages automatically but eventually will. These cases are still currently documented in the &lt;em&gt;/usr/ports/UPDATING&lt;/em&gt; file. You can keep an eye on this file in &lt;a href=&quot;http://svnweb.freebsd.org/ports/head/UPDATING?view=co&quot;&gt;ports svnweb&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;Pkg discussion takes place on the &lt;a href=&quot;http://lists.freebsd.org/mailman/listinfo/freebsd-pkg&quot;&gt;freebsd-pkg&lt;/a&gt; mailing list and on IRC in #pkgng on Freenode. Poudriere discussion takes place on IRC in #poudriere on Freenode. Feel free to stop by with any questions or ideas you have.&lt;/p&gt;
+&lt;p&gt;As for keeping servers up-to-date, since I am a Ports committer and also a Pkg developer, I like to observe all upgrades that I can to find any issues. I&amp;rsquo;m also just paranoid and like to make sure upgrades go smoothly, so I manually run &lt;code&gt;pkg upgrade&lt;/code&gt; on my servers and don&amp;rsquo;t use an automated crontab for it. My systems have a lot of applications built outside of ports, so I must save shared libraries until those applications can be rebuilt. This is similar to what portupgrade and portmaster with the &lt;code&gt;-p&lt;/code&gt; flag do. An example of this can found on my &lt;a href=&#34;https://gist.github.com/bdrewery/3099160&#34;&gt;github&lt;/a&gt;. Manually running my upgrade script  is not a problem for me since I only maintain a handful of servers. However, Pkg is supported by &lt;a href=&#34;https://forge.puppetlabs.com/zleslie/pkgng&#34;&gt;puppet&lt;/a&gt;, &lt;a href=&#34;http://docs.saltstack.com/ref/modules/all/salt.modules.pkgng.html&#34;&gt;salt&lt;/a&gt; and &lt;a href=&#34;https://github.com/ansible/ansible/pull/2883&#34;&gt;ansible&lt;/a&gt;. Do be warned though that some manual intervention is still required with package upgrades occasionally. This usually only occurs anymore when the origin of a package changes and requires running &lt;code&gt;pkg set -o old/origin:new/origin&lt;/code&gt;. The most common case is when something like Perl is updated. You can detect this case and other cases of conflicting packages in a script by running &lt;code&gt;pkg upgrade -Fy&lt;/code&gt; which will list all conflicting packages in the upgrade. The ports framework and Pkg currently do not have a means to handle replaced packages automatically but eventually will. These cases are still currently documented in the &lt;em&gt;/usr/ports/UPDATING&lt;/em&gt; file. You can keep an eye on this file in &lt;a href=&#34;http://svnweb.freebsd.org/ports/head/UPDATING?view=co&#34;&gt;ports svnweb&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Pkg discussion takes place on the &lt;a href=&#34;http://lists.freebsd.org/mailman/listinfo/freebsd-pkg&#34;&gt;freebsd-pkg&lt;/a&gt; mailing list and on IRC in #pkgng on Freenode. Poudriere discussion takes place on IRC in #poudriere on Freenode. Feel free to stop by with any questions or ideas you have.&lt;/p&gt;
 
 Copyright 2015-04-27 Bryan Drewery</content>
   </entry>
@@ -147,224 +143,211 @@ Copyright 2015-04-27 Bryan Drewery</content>
     <author>
       <name>Bryan Drewery</name>
     </author>
-    <content type="html">&lt;p&gt;The best way to sandbox a web application is in a FreeBSD jail. Taking this a step further and placing a caching nginx reverse proxy in front of it can increase performance. The backend application server does not need to be on the same server as the internet-facing application server.
-&lt;!--more--&gt;&lt;/p&gt;
-&lt;p&gt;A typical setup is:&lt;/p&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;                 WAN
-                  ^
-                  |
-               1.2.3.4
-               10.50.1.2
-        +---------+-----------+
-        | Frontend server     |
-        |---------------------|
-        | nginx reverse proxy |
-        +----------+----------+
-                   |
-                  LAN
-                   |
-+------------------+---------------------+
-|           Application server           |
-|----------------------------------------|
-|     10.50.2.2         10.50.3.2        |
-|  +---------------+ +----------------+  |
-|  |  Jail: Blog   | |  Jail: Webmail |  |
-|  |---------------| |----------------|  |
-|  |  php-fpm      | |  php-fpm       |  |
-|  |  nginx        | |  nginx         |  |
-|  +---------------+ +----------------+  |
-+----------------------------------------+
-&lt;/pre&gt;&lt;/div&gt;
+    <content type="html">&lt;p&gt;The best way to sandbox a web application is in a FreeBSD jail. Taking this a step further and placing a caching nginx reverse proxy in front of it can increase performance. The backend application server does not need to be on the same server as the internet-facing application server.&lt;/p&gt;
 
+&lt;p&gt;A typical setup is:&lt;/p&gt;
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;c&#34;&gt;                 WAN&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;                  ^&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;                  |&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;               1&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;2&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;3&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;4&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;               10&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;50&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;1&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;2&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;+---------+-----------+&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;        | Frontend server     |&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;        |&lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;---------------------&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;|&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;        | nginx reverse proxy |&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;+----------+----------+&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;                   |&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;                  LAN&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;                   |&lt;/span&gt;
+&lt;span class=&#34;nb&#34;&gt;+------------------+---------------------+&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;|           Application server           |&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;|&lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;----------------------------------------&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;|&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;|     10&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;50&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;2&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;2         10&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;50&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;3&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;2        |&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;|  &lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;+---------------+&lt;/span&gt;&lt;span class=&#34;c&#34;&gt; &lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;+----------------+&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;  |&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;|  |  Jail: Blog   | |  Jail: Webmail |  |&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;|  |&lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;---------------&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;| |&lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;----------------&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;|  |&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;|  |  php&lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;-&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;fpm      | |  php&lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;-&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;fpm       |  |&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;|  |  nginx        | |  nginx         |  |&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;|  &lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;+---------------+&lt;/span&gt;&lt;span class=&#34;c&#34;&gt; &lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;+----------------+&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;  |&lt;/span&gt;
+&lt;span class=&#34;nb&#34;&gt;+----------------------------------------+&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
 &lt;p&gt;This setup allows having the frontend server cache static content to lessen the load on the backend application servers and avoids loading content dynamically through the scripting or CGI interfaces. It also allows segregation for the application servers from the WAN. Each jail can optionally be given WAN access or can be kept as LAN only.&lt;/p&gt;
 &lt;p&gt;The frontend server and backend application server can be combined if wanted:&lt;/p&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;                  WAN
-                   ^
-                   |
-+------------------+---------------------+
-|           Application server           |
-|----------------------------------------|
-|        +---------+-----------+         |
-|        | nginx reverse proxy |         |
-|        +---------+-----------+         |
-|                 / \                    |
-|     10.50.2.2         10.50.3.2        |
-|  +---------------+ +----------------+  |
-|  |  Jail: Blog   | |  Jail: Webmail |  |
-|  |---------------| |----------------|  |
-|  |  php-fpm      | |  php-fpm       |  |
-|  |  nginx        | |  nginx         |  |
-|  +---------------+ +----------------+  |
-+----------------------------------------+
-&lt;/pre&gt;&lt;/div&gt;
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;c&#34;&gt;                  WAN&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;                   ^&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;                   |&lt;/span&gt;
+&lt;span class=&#34;nb&#34;&gt;+------------------+---------------------+&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;|           Application server           |&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;|&lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;----------------------------------------&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;|&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;|        &lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;+---------+-----------+&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;         |&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;|        | nginx reverse proxy |         |&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;|        &lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;+---------+-----------+&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;         |&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;|                 / \                    |&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;|     10&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;50&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;2&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;2         10&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;50&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;3&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;2        |&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;|  &lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;+---------------+&lt;/span&gt;&lt;span class=&#34;c&#34;&gt; &lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;+----------------+&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;  |&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;|  |  Jail: Blog   | |  Jail: Webmail |  |&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;|  |&lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;---------------&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;| |&lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;----------------&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;|  |&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;|  |  php&lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;-&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;fpm      | |  php&lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;-&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;fpm       |  |&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;|  |  nginx        | |  nginx         |  |&lt;/span&gt;
+&lt;span class=&#34;c&#34;&gt;|  &lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;+---------------+&lt;/span&gt;&lt;span class=&#34;c&#34;&gt; &lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;+----------------+&lt;/span&gt;&lt;span class=&#34;c&#34;&gt;  |&lt;/span&gt;
+&lt;span class=&#34;nb&#34;&gt;+----------------------------------------+&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
-
-&lt;h2 id=&quot;reverse-proxy-frontend-server&quot;&gt;Reverse proxy / Frontend server&lt;/h2&gt;
+&lt;h2 id=&#34;reverse-proxy-frontend-server&#34;&gt;Reverse proxy / Frontend server&lt;/h2&gt;
 &lt;p&gt;The frontend server is the only one that needs WAN access. It will only need nginx installed which will forward all requests to the backend application servers. A typical configuration for the reverse proxy is:&lt;/p&gt;
-&lt;h4 class=&quot;code_title&quot;&gt;/usr/local/etc/nginx/vhosts/blog.example.com&lt;/h4&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;k&quot;&gt;server&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;kn&quot;&gt;listen&lt;/span&gt;       &lt;span class=&quot;n&quot;&gt;1.2.3.4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;80&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kn&quot;&gt;server_name&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;blog.example.com&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;h4 class=&#34;code_title&#34;&gt;/usr/local/etc/nginx/vhosts/blog.example.com&lt;/h4&gt;
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;k&#34;&gt;server&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;kn&#34;&gt;listen&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;       &lt;/span&gt;&lt;span class=&#34;n&#34;&gt;1.2.3.4&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;80&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;kn&#34;&gt;server_name&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;blog.example.com&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
 
-    &lt;span class=&quot;c1&quot;&gt;# Cache all static content for 2 days&lt;/span&gt;
-    &lt;span class=&quot;kn&quot;&gt;location&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;~&lt;/span&gt;&lt;span class=&quot;sr&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;^.+.(jpg|jpeg|gif|png|ico|css|zip|tgz|gz|rar|bz2|doc|xls|exe|pdf|ppt|txt|tar|mid|midi|wav|bmp|rtf|js)&lt;/span&gt;$ &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;kn&quot;&gt;proxy_cache_valid&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;200&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;201&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;302&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;120m&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-        &lt;span class=&quot;kn&quot;&gt;expires&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;2d&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-        &lt;span class=&quot;kn&quot;&gt;proxy_pass&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;http://10.50.2.2:80&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-        &lt;span class=&quot;kn&quot;&gt;proxy_cache&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;on&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;c1&#34;&gt;# Cache all static content for 2 days&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;kn&#34;&gt;location&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;p&#34;&gt;~&lt;/span&gt;&lt;span class=&#34;sr&#34;&gt;*&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;^.+.(jpg|jpeg|gif|png|ico|css|zip|tgz|gz|rar|bz2|doc|xls|exe|pdf|ppt|txt|tar|mid|midi|wav|bmp|rtf|js)&lt;/span&gt;$&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;kn&#34;&gt;proxy_cache_valid&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;200&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;201&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;302&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;120m&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;kn&#34;&gt;expires&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;2d&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;kn&#34;&gt;proxy_pass&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;http://10.50.2.2:80&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;kn&#34;&gt;proxy_cache&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;no&#34;&gt;on&lt;/span&gt;&lt;span class=&#34;s&#34;&gt;e&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
 
-    &lt;span class=&quot;kn&quot;&gt;location&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;kn&quot;&gt;proxy_pass&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;http://10.50.2.2:80&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-        &lt;span class=&quot;kn&quot;&gt;proxy_read_timeout&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;40&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
+&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;kn&#34;&gt;location&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;/&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;kn&#34;&gt;proxy_pass&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;http://10.50.2.2:80&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;kn&#34;&gt;proxy_read_timeout&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;40&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
 &lt;p&gt;This will forward all requests to the backend server for &lt;em&gt;blog.example.com&lt;/em&gt; on &lt;em&gt;10.50.1.2&lt;/em&gt;. It will also cache all static content on the frontend server for 2 days which will lessen the load on the backend application server.&lt;/p&gt;
-&lt;h2 id=&quot;application-server&quot;&gt;Application Server&lt;/h2&gt;
+&lt;h2 id=&#34;application-server&#34;&gt;Application Server&lt;/h2&gt;
 &lt;p&gt;Each application that needs to be setup will have its own jail and its own nginx process inside of that jail if needed. Some applications have their own network daemons that will not require using nginx for FastCGI.&lt;/p&gt;
 &lt;p&gt;First the jail IPs need to be added to the host. Add them to the interface&amp;rsquo;s address list in &lt;em&gt;/etc/rc.conf&lt;/em&gt;:&lt;/p&gt;
-&lt;h4 class=&quot;code_title&quot;&gt;/etc/rc.conf&lt;/h4&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;nv&quot;&gt;ipv4_addrs_em0&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;10.50.2.2/24 10.50.3.2/24&amp;quot;&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
+&lt;h4 class=&#34;code_title&#34;&gt;/etc/rc.conf&lt;/h4&gt;
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;nv&#34;&gt;ipv4_addrs_em0&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;s2&#34;&gt;&amp;quot;10.50.2.2/24 10.50.3.2/24&amp;quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
 &lt;p&gt;Then restart networking:&lt;/p&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;gp&quot;&gt;root@host#&lt;/span&gt; service netif restart &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; service routing restart
-&lt;/pre&gt;&lt;/div&gt;
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;gp&#34;&gt;root@host# &lt;/span&gt;service&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;netif&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;restart&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;o&#34;&gt;&amp;amp;&amp;amp;&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;service&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;routing&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;restart
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
+&lt;h3 id=&#34;jail-setup&#34;&gt;Jail setup&lt;/h3&gt;
+&lt;p&gt;The &lt;a href=&#34;http://www.freshports.org/sysutils/ezjail&#34;&gt;sysutils/ezjail&lt;/a&gt; port is the easiest utility for setting up the jail on FreeBSD. The jail needs to be created from the host and then populated with packages from inside of the jail. More details for this can be found on the &lt;a href=&#34;http://erdgeist.org/arts/software/ezjail/&#34;&gt;ezjail website&lt;/a&gt;.&lt;/p&gt;
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;gp&#34;&gt;# &lt;/span&gt;Create&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;the&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;base&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;jail
+&lt;span class=&#34;gp&#34;&gt;root@host# &lt;/span&gt;ezjail-admin&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;update&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-i
 
-&lt;h3 id=&quot;jail-setup&quot;&gt;Jail setup&lt;/h3&gt;
-&lt;p&gt;The &lt;a href=&quot;http://www.freshports.org/sysutils/ezjail&quot;&gt;sysutils/ezjail&lt;/a&gt; port is the easiest utility for setting up the jail on FreeBSD. The jail needs to be created from the host and then populated with packages from inside of the jail. More details for this can be found on the &lt;a href=&quot;http://erdgeist.org/arts/software/ezjail/&quot;&gt;ezjail website&lt;/a&gt;.&lt;/p&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;go&quot;&gt;# Create the base jail&lt;/span&gt;
-&lt;span class=&quot;gp&quot;&gt;root@host#&lt;/span&gt; ezjail-admin update -i
+&lt;span class=&#34;gp&#34;&gt;# &lt;/span&gt;Create&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;each&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;application&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;jail
+&lt;span class=&#34;gp&#34;&gt;root@host# &lt;/span&gt;ezjail-admin&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;create&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-c&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;zfs&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-r&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;/tank/jails/blog&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;blog&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;m&#34;&gt;10&lt;/span&gt;.50.2.2
+&lt;span class=&#34;gp&#34;&gt;root@host# &lt;/span&gt;ezjail-admin&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;create&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-c&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;zfs&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-r&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;/tank/jails/webmail&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;webmail&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;m&#34;&gt;10&lt;/span&gt;.50.3.2
 
-&lt;span class=&quot;go&quot;&gt;# Create each application jail&lt;/span&gt;
-&lt;span class=&quot;gp&quot;&gt;root@host#&lt;/span&gt; ezjail-admin create -c zfs -r /tank/jails/blog blog 10.50.2.2
-&lt;span class=&quot;gp&quot;&gt;root@host#&lt;/span&gt; ezjail-admin create -c zfs -r /tank/jails/webmail webmail 10.50.3.2
+&lt;span class=&#34;gp&#34;&gt;# &lt;/span&gt;Start&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;the&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;jails
+&lt;span class=&#34;gp&#34;&gt;root@host# &lt;/span&gt;ezjail-admin&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;start&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;blog
+&lt;span class=&#34;gp&#34;&gt;root@host# &lt;/span&gt;ezjail-admin&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;start&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;webmail
 
-&lt;span class=&quot;go&quot;&gt;# Start the jails&lt;/span&gt;
-&lt;span class=&quot;gp&quot;&gt;root@host#&lt;/span&gt; ezjail-admin start blog
-&lt;span class=&quot;gp&quot;&gt;root@host#&lt;/span&gt; ezjail-admin start webmail
+&lt;span class=&#34;gp&#34;&gt;# &lt;/span&gt;Enable&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;ezjail&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;k&#34;&gt;for&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;next&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;boot
+&lt;span class=&#34;gp&#34;&gt;root@host# &lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;echo&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;ezjail_enable&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;YES&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&amp;gt;&amp;gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;/etc/rc.conf
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
-&lt;span class=&quot;go&quot;&gt;# Enable ezjail for next boot&lt;/span&gt;
-&lt;span class=&quot;gp&quot;&gt;root@host#&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;echo &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;ezjail_enable&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;YES &amp;gt;&amp;gt; /etc/rc.conf
-&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Next packages can be installed using &lt;a href=&#34;http://www.freebsd.org/doc/handbook/pkgng-intro.html&#34;&gt;pkg&lt;/a&gt; from the host system. This assumes that meta packages have been setup on the remote repository as described in &lt;a href=&#34;/posts/2013-07-21-managing-role-based-freebsd-servers-with-meta-packages-and-poudriere&#34;&gt;managing FreeBSD servers with meta packages&lt;/a&gt;. This also assumes that the meta package includes all needed dependencies including &lt;a href=&#34;http://www.freshports.org/www/nginx&#34;&gt;www/nginx&lt;/a&gt;.&lt;/p&gt;
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;gp&#34;&gt;root@host# &lt;/span&gt;pkg&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-j&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;blog&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;install&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;local/blog
+&lt;span class=&#34;gp&#34;&gt;root@host# &lt;/span&gt;pkg&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-j&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;webmail&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;install&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;local/webmail
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
-
-&lt;p&gt;Next packages can be installed using &lt;a href=&quot;http://www.freebsd.org/doc/handbook/pkgng-intro.html&quot;&gt;pkg&lt;/a&gt; from the host system. This assumes that meta packages have been setup on the remote repository as described in &lt;a href=&quot;/posts/2013-07-21-managing-role-based-freebsd-servers-with-meta-packages-and-poudriere&quot;&gt;managing FreeBSD servers with meta packages&lt;/a&gt;. This also assumes that the meta package includes all needed dependencies including &lt;a href=&quot;http://www.freshports.org/www/nginx&quot;&gt;www/nginx&lt;/a&gt;.&lt;/p&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;gp&quot;&gt;root@host#&lt;/span&gt; pkg -j blog install &lt;span class=&quot;nb&quot;&gt;local&lt;/span&gt;/blog
-&lt;span class=&quot;gp&quot;&gt;root@host#&lt;/span&gt; pkg -j webmail install &lt;span class=&quot;nb&quot;&gt;local&lt;/span&gt;/webmail
-&lt;/pre&gt;&lt;/div&gt;
-
-
-&lt;h3 id=&quot;application-setup&quot;&gt;Application setup&lt;/h3&gt;
+&lt;h3 id=&#34;application-setup&#34;&gt;Application setup&lt;/h3&gt;
 &lt;p&gt;Enter the jail from the host with &lt;code&gt;ezjail-admin console blog&lt;/code&gt;. From there nginx, PHP-FPM and the application can all be setup.&lt;/p&gt;
-&lt;p&gt;This example assumes that &lt;a href=&quot;http://php-fpm.org/&quot;&gt;PHP-FPM&lt;/a&gt; will be used with a PHP application.&lt;/p&gt;
-&lt;h4 id=&quot;nginx&quot;&gt;nginx&lt;/h4&gt;
+&lt;p&gt;This example assumes that &lt;a href=&#34;http://php-fpm.org/&#34;&gt;PHP-FPM&lt;/a&gt; will be used with a PHP application.&lt;/p&gt;
+&lt;h4 id=&#34;nginx&#34;&gt;nginx&lt;/h4&gt;
 &lt;p&gt;nginx needs to be setup to use FastCGI.&lt;/p&gt;
-&lt;h4 class=&quot;code_title&quot;&gt;/usr/local/etc/nginx/vhosts/blog.example.com&lt;/h4&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;k&quot;&gt;server&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;kn&quot;&gt;listen&lt;/span&gt;       &lt;span class=&quot;n&quot;&gt;10.50.2.2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;80&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;kn&quot;&gt;server_name&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;blog.example.com&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;h4 class=&#34;code_title&#34;&gt;/usr/local/etc/nginx/vhosts/blog.example.com&lt;/h4&gt;
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;k&#34;&gt;server&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;kn&#34;&gt;listen&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;       &lt;/span&gt;&lt;span class=&#34;n&#34;&gt;10.50.2.2&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;80&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;kn&#34;&gt;server_name&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;blog.example.com&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
 
-    &lt;span class=&quot;kn&quot;&gt;location&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;kn&quot;&gt;alias&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/usr/local/www/blog/&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-        &lt;span class=&quot;kn&quot;&gt;index&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;index.php&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;index.html&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;index.htm&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-        &lt;span class=&quot;kn&quot;&gt;break&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;kn&#34;&gt;location&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;/&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;kn&#34;&gt;alias&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;/usr/local/www/blog/&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;kn&#34;&gt;index&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;index.php&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;index.html&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;index.htm&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;kn&#34;&gt;break&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
 
-    &lt;span class=&quot;kn&quot;&gt;location&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;~&lt;/span&gt; &lt;span class=&quot;sr&quot;&gt;/(.*\.php)$&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;kn&quot;&gt;root&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/usr/local/www/blog/&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;kn&#34;&gt;location&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;p&#34;&gt;~&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;sr&#34;&gt;/(.*\.php)$&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;kn&#34;&gt;root&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;/usr/local/www/blog/&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
 
-        &lt;span class=&quot;c1&quot;&gt;# Filter out arbitrary code execution&lt;/span&gt;
-        &lt;span class=&quot;kn&quot;&gt;try_files&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$uri&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;404&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-        &lt;span class=&quot;kn&quot;&gt;location&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;~&lt;/span&gt; &lt;span class=&quot;sr&quot;&gt;\..*/.*\.php$&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;kn&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;404&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;}&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;c1&#34;&gt;# Filter out arbitrary code execution&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;kn&#34;&gt;try_files&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;$uri&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;p&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;404&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;kn&#34;&gt;location&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;p&#34;&gt;~&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;sr&#34;&gt;\..*/.*\.php$&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;&lt;span class=&#34;kn&#34;&gt;return&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;404&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;}&lt;/span&gt;
 
-        &lt;span class=&quot;kn&quot;&gt;fastcgi_pass&lt;/span&gt;   &lt;span class=&quot;s&quot;&gt;unix:/var/run/php-fpm-www.sock&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-        &lt;span class=&quot;kn&quot;&gt;include&lt;/span&gt;        &lt;span class=&quot;s&quot;&gt;fastcgi_params&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-        &lt;span class=&quot;kn&quot;&gt;break&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
+&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;kn&#34;&gt;fastcgi_pass&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;   &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;unix:/var/run/php-fpm-www.sock&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;kn&#34;&gt;include&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;fastcgi_params&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;kn&#34;&gt;break&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
+&lt;h4 class=&#34;code_title&#34;&gt;/usr/local/etc/nginx/fastcgi_params&lt;/h4&gt;
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;k&#34;&gt;fastcgi_index&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;index.php&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
 
-&lt;h4 class=&quot;code_title&quot;&gt;/usr/local/etc/nginx/fastcgi_params&lt;/h4&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;k&quot;&gt;fastcgi_index&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;index.php&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_connect_timeout&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;60&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_send_timeout&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;180&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_read_timeout&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;180&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_buffer_size&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;128k&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_buffers&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;4&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;256k&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_busy_buffers_size&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;256k&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_temp_file_write_size&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;256k&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_intercept_errors&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;no&#34;&gt;on&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
 
-&lt;span class=&quot;k&quot;&gt;fastcgi_connect_timeout&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;60&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;fastcgi_send_timeout&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;180&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;fastcgi_read_timeout&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;180&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;fastcgi_buffer_size&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;128k&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;fastcgi_buffers&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;4&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;256k&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;fastcgi_busy_buffers_size&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;256k&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;fastcgi_temp_file_write_size&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;256k&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;fastcgi_intercept_errors&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;on&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_param&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;PATH_INFO&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;          &lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;$fastcgi_path_info&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_param&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;PATH_TRANSLATED&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;$document_root$fastcgi_path_info&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
 
-&lt;span class=&quot;k&quot;&gt;fastcgi_param&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;PATH_INFO&lt;/span&gt;          &lt;span class=&quot;nv&quot;&gt;$fastcgi_path_info&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;fastcgi_param&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;PATH_TRANSLATED&lt;/span&gt;    &lt;span class=&quot;nv&quot;&gt;$document_root$fastcgi_path_info&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_param&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;QUERY_STRING&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;       &lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;$query_string&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_param&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;REQUEST_METHOD&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;     &lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;$request_method&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_param&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;CONTENT_TYPE&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;       &lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;$content_type&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_param&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;CONTENT_LENGTH&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;     &lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;$content_length&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
 
-&lt;span class=&quot;k&quot;&gt;fastcgi_param&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;QUERY_STRING&lt;/span&gt;       &lt;span class=&quot;nv&quot;&gt;$query_string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;fastcgi_param&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;REQUEST_METHOD&lt;/span&gt;     &lt;span class=&quot;nv&quot;&gt;$request_method&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;fastcgi_param&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;CONTENT_TYPE&lt;/span&gt;       &lt;span class=&quot;nv&quot;&gt;$content_type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;fastcgi_param&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;CONTENT_LENGTH&lt;/span&gt;     &lt;span class=&quot;nv&quot;&gt;$content_length&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_param&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;SCRIPT_NAME&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;$fastcgi_script_name&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_param&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;SCRIPT_FILENAME&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;$document_root$fastcgi_script_name&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_param&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;REQUEST_URI&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;$request_uri&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_param&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;DOCUMENT_URI&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;       &lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;$document_uri&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_param&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;DOCUMENT_ROOT&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;      &lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;$document_root&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_param&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;SERVER_PROTOCOL&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;$server_protocol&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
 
-&lt;span class=&quot;k&quot;&gt;fastcgi_param&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;SCRIPT_NAME&lt;/span&gt;        &lt;span class=&quot;nv&quot;&gt;$fastcgi_script_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;fastcgi_param&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;SCRIPT_FILENAME&lt;/span&gt;    &lt;span class=&quot;nv&quot;&gt;$document_root$fastcgi_script_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;fastcgi_param&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;REQUEST_URI&lt;/span&gt;        &lt;span class=&quot;nv&quot;&gt;$request_uri&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;fastcgi_param&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;DOCUMENT_URI&lt;/span&gt;       &lt;span class=&quot;nv&quot;&gt;$document_uri&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;fastcgi_param&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;DOCUMENT_ROOT&lt;/span&gt;      &lt;span class=&quot;nv&quot;&gt;$document_root&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;fastcgi_param&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;SERVER_PROTOCOL&lt;/span&gt;    &lt;span class=&quot;nv&quot;&gt;$server_protocol&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_param&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;GATEWAY_INTERFACE&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;CGI/1.1&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_param&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;SERVER_SOFTWARE&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;nginx/&lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;$nginx_version&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
 
-&lt;span class=&quot;k&quot;&gt;fastcgi_param&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;GATEWAY_INTERFACE&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;CGI/1.1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;fastcgi_param&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;SERVER_SOFTWARE&lt;/span&gt;    &lt;span class=&quot;s&quot;&gt;nginx/&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$nginx_version&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_param&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;REMOTE_ADDR&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;$remote_addr&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_param&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;REMOTE_PORT&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;$remote_port&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_param&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;SERVER_ADDR&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;$server_addr&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_param&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;SERVER_PORT&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;$server_port&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_param&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;SERVER_NAME&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;        &lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;$server_name&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
 
-&lt;span class=&quot;k&quot;&gt;fastcgi_param&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;REMOTE_ADDR&lt;/span&gt;        &lt;span class=&quot;nv&quot;&gt;$remote_addr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;fastcgi_param&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;REMOTE_PORT&lt;/span&gt;        &lt;span class=&quot;nv&quot;&gt;$remote_port&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;fastcgi_param&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;SERVER_ADDR&lt;/span&gt;        &lt;span class=&quot;nv&quot;&gt;$server_addr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;fastcgi_param&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;SERVER_PORT&lt;/span&gt;        &lt;span class=&quot;nv&quot;&gt;$server_port&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;fastcgi_param&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;SERVER_NAME&lt;/span&gt;        &lt;span class=&quot;nv&quot;&gt;$server_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&#34;c1&#34;&gt;# PHP only, required if PHP was built with --enable-force-cgi-redirect&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;fastcgi_param&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;REDIRECT_STATUS&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;200&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
-&lt;span class=&quot;c1&quot;&gt;# PHP only, required if PHP was built with --enable-force-cgi-redirect&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;fastcgi_param&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;REDIRECT_STATUS&lt;/span&gt;    &lt;span class=&quot;mi&quot;&gt;200&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
-
-&lt;h4 class=&quot;code_title&quot;&gt;/etc/rc.conf&lt;/h4&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;nv&quot;&gt;nginx_enable&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;YES
-&lt;/pre&gt;&lt;/div&gt;
-
+&lt;h4 class=&#34;code_title&#34;&gt;/etc/rc.conf&lt;/h4&gt;
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;nv&#34;&gt;nginx_enable&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;YES
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
 &lt;p&gt;Start nginx with &lt;code&gt;service nginx start&lt;/code&gt;.&lt;/p&gt;
-&lt;h4 id=&quot;php-fpm&quot;&gt;PHP-FPM&lt;/h4&gt;
+&lt;h4 id=&#34;php-fpm&#34;&gt;PHP-FPM&lt;/h4&gt;
 &lt;p&gt;PHP-FPM will start a daemon to listen for local connections from nginx. All that needs to be done for PHP-FPM is to configure it to listen on a UNIX socket and to enable it on boot.&lt;/p&gt;
-&lt;h4 class=&quot;code_title&quot;&gt;/usr/local/etc/php-fpm.conf&lt;/h4&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;c1&quot;&gt;# Replace listen lines with:&lt;/span&gt;
-&lt;span class=&quot;na&quot;&gt;listen&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/var/run/php-fpm-$pool.sock&lt;/span&gt;
-&lt;span class=&quot;na&quot;&gt;listen.owner&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;www&lt;/span&gt;
-&lt;span class=&quot;na&quot;&gt;listen.group&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;www&lt;/span&gt;
-&lt;span class=&quot;na&quot;&gt;listen.mode&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;0660&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
+&lt;h4 class=&#34;code_title&#34;&gt;/usr/local/etc/php-fpm.conf&lt;/h4&gt;
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;c1&#34;&gt;# Replace listen lines with:&lt;/span&gt;
+&lt;span class=&#34;na&#34;&gt;listen&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;/var/run/php-fpm-$pool.sock&lt;/span&gt;
+&lt;span class=&#34;na&#34;&gt;listen.owner&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;www&lt;/span&gt;
+&lt;span class=&#34;na&#34;&gt;listen.group&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;www&lt;/span&gt;
+&lt;span class=&#34;na&#34;&gt;listen.mode&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;s&#34;&gt;0660&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
-
-&lt;h4 class=&quot;code_title&quot;&gt;/etc/rc.conf&lt;/h4&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;nv&quot;&gt;php_fpm_enable&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;YES
-&lt;/pre&gt;&lt;/div&gt;
-
+&lt;h4 class=&#34;code_title&#34;&gt;/etc/rc.conf&lt;/h4&gt;
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;nv&#34;&gt;php_fpm_enable&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;YES
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
 &lt;p&gt;Start PHP-FPM with &lt;code&gt;service php-fpm start&lt;/code&gt;.&lt;/p&gt;
-&lt;h4 id=&quot;application&quot;&gt;Application&lt;/h4&gt;
+&lt;h4 id=&#34;application&#34;&gt;Application&lt;/h4&gt;
 &lt;p&gt;Configure the application itself as needed.&lt;/p&gt;
-&lt;h2 id=&quot;updating-jails&quot;&gt;Updating jails&lt;/h2&gt;
+&lt;h2 id=&#34;updating-jails&#34;&gt;Updating jails&lt;/h2&gt;
 &lt;p&gt;Occasionally the jail&amp;rsquo;s package can be updated from the host:&lt;/p&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;gp&quot;&gt;root@host#&lt;/span&gt; pkg -j blog upgrade
-&lt;/pre&gt;&lt;/div&gt;
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;gp&#34;&gt;root@host# &lt;/span&gt;pkg&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-j&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;blog&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;upgrade
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
-
-&lt;h2 id=&quot;wrap-up&quot;&gt;Wrap up&lt;/h2&gt;
+&lt;h2 id=&#34;wrap-up&#34;&gt;Wrap up&lt;/h2&gt;
 &lt;p&gt;By moving each application into its own jail, security and performance can both be improved greatly. mod_php with Apache could be used but is much more heavyweight in each jail.&lt;/p&gt;
 
 Copyright 2013-11-27 Bryan Drewery</content>
@@ -378,206 +361,194 @@ Copyright 2013-11-27 Bryan Drewery</content>
     <author>
       <name>Bryan Drewery</name>
     </author>
-    <content type="html">&lt;p&gt;To simplify server management I create &amp;ldquo;meta&amp;rdquo; packages in FreeBSD ports that can generate a package with only dependencies on other packages. This allows to me to just install this 1 package on the target server and have it pull in all of the packages that I want on there. I assign each server specific &amp;ldquo;roles&amp;rdquo; and only install 1 or 2 packages per server depending on which roles they fulfill. The roles may be one of &amp;ldquo;dev&amp;rdquo;, &amp;ldquo;web&amp;rdquo;, &amp;ldquo;ports-dev&amp;rdquo;, &amp;ldquo;jail&amp;rdquo;, etc. This ensures that all servers fulfilling specific roles will always have the proper packages installed. For some applications, I use a dedicated jail with a meta package that only pulls in the required dependencies for that application to run. For instance, on a PHP application jail, the meta package may pull in nginx, php, eaccelerator, git, etc.
-&lt;!--more--&gt;&lt;/p&gt;
-&lt;h2 id=&quot;packages-are-created-from-ports&quot;&gt;Packages are created from ports&lt;/h2&gt;
+    <content type="html">&lt;p&gt;To simplify server management I create &amp;ldquo;meta&amp;rdquo; packages in FreeBSD ports that can generate a package with only dependencies on other packages. This allows to me to just install this 1 package on the target server and have it pull in all of the packages that I want on there. I assign each server specific &amp;ldquo;roles&amp;rdquo; and only install 1 or 2 packages per server depending on which roles they fulfill. The roles may be one of &amp;ldquo;dev&amp;rdquo;, &amp;ldquo;web&amp;rdquo;, &amp;ldquo;ports-dev&amp;rdquo;, &amp;ldquo;jail&amp;rdquo;, etc. This ensures that all servers fulfilling specific roles will always have the proper packages installed. For some applications, I use a dedicated jail with a meta package that only pulls in the required dependencies for that application to run. For instance, on a PHP application jail, the meta package may pull in nginx, php, eaccelerator, git, etc.&lt;/p&gt;
+
+&lt;h2 id=&#34;packages-are-created-from-ports&#34;&gt;Packages are created from ports&lt;/h2&gt;
 &lt;p&gt;To create meta packages, define a port that requires the actual ports that should be installed. Then build packages for those meta ports.&lt;/p&gt;
-&lt;h3 id=&quot;dev-meta-port&quot;&gt;dev-meta port&lt;/h3&gt;
+&lt;h3 id=&#34;dev-meta-port&#34;&gt;dev-meta port&lt;/h3&gt;
 &lt;p&gt;This meta port will install &lt;em&gt;git&lt;/em&gt;, &lt;em&gt;cscope&lt;/em&gt; and &lt;em&gt;vim&lt;/em&gt;. Which dependencies those pull in do not matter here.&lt;/p&gt;
-&lt;h4 class=&quot;code_title&quot;&gt;/usr/ports/local/dev-meta/Makefile&lt;/h4&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;nv&quot;&gt;PORTNAME&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;	&lt;span class=&quot;nb&quot;&gt;local&lt;/span&gt;-dev-meta
-&lt;span class=&quot;nv&quot;&gt;PORTVERSION&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;	20130719
-&lt;span class=&quot;nv&quot;&gt;CATEGORIES&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;	&lt;span class=&quot;nb&quot;&gt;local&lt;/span&gt;
-&lt;span class=&quot;nv&quot;&gt;MASTER_SITES&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;	&lt;span class=&quot;c&quot;&gt;# none&lt;/span&gt;
-&lt;span class=&quot;nv&quot;&gt;DISTFILES&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;	&lt;span class=&quot;c&quot;&gt;# none&lt;/span&gt;
-&lt;span class=&quot;nv&quot;&gt;EXTRACT_ONLY&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;	&lt;span class=&quot;c&quot;&gt;# none&lt;/span&gt;
+&lt;h4 class=&#34;code_title&#34;&gt;/usr/ports/local/dev-meta/Makefile&lt;/h4&gt;
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;nv&#34;&gt;PORTNAME&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;	&lt;/span&gt;local-dev-meta
+&lt;span class=&#34;nv&#34;&gt;PORTVERSION&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;	&lt;/span&gt;&lt;span class=&#34;m&#34;&gt;20130719&lt;/span&gt;
+&lt;span class=&#34;nv&#34;&gt;CATEGORIES&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;	&lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;local&lt;/span&gt;
+&lt;span class=&#34;nv&#34;&gt;MASTER_SITES&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;	&lt;/span&gt;&lt;span class=&#34;c1&#34;&gt;# none&lt;/span&gt;
+&lt;span class=&#34;nv&#34;&gt;DISTFILES&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;	&lt;/span&gt;&lt;span class=&#34;c1&#34;&gt;# none&lt;/span&gt;
+&lt;span class=&#34;nv&#34;&gt;EXTRACT_ONLY&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;	&lt;/span&gt;&lt;span class=&#34;c1&#34;&gt;# none&lt;/span&gt;
 
-&lt;span class=&quot;nv&quot;&gt;MAINTAINER&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;	&lt;span class=&quot;nb&quot;&gt;local&lt;/span&gt;@localdomain.com
-&lt;span class=&quot;nv&quot;&gt;COMMENT&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;	Meta port &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; dev packages
+&lt;span class=&#34;nv&#34;&gt;MAINTAINER&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;	&lt;/span&gt;local@localdomain.com
+&lt;span class=&#34;nv&#34;&gt;COMMENT&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;	&lt;/span&gt;Meta&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;port&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;k&#34;&gt;for&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;dev&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;packages
 
-&lt;span class=&quot;nv&quot;&gt;NO_BUILD&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;	yes
-&lt;span class=&quot;nv&quot;&gt;NO_WRKSUBDIR&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;	yes
+&lt;span class=&#34;nv&#34;&gt;NO_BUILD&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;	&lt;/span&gt;yes
+&lt;span class=&#34;nv&#34;&gt;NO_WRKSUBDIR&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;	&lt;/span&gt;yes
 
-&lt;span class=&quot;nv&quot;&gt;RUN_DEPENDS&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt;	git&amp;gt;0:&lt;span class=&quot;si&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;PORTSDIR&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;/devel/git
-&lt;span class=&quot;nv&quot;&gt;RUN_DEPENDS&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt;	cscope&amp;gt;0:&lt;span class=&quot;si&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;PORTSDIR&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;/devel/cscope
-&lt;span class=&quot;nv&quot;&gt;RUN_DEPENDS&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt;	vim-lite&amp;gt;0:&lt;span class=&quot;si&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;PORTSDIR&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;/editors/vim-lite
+&lt;span class=&#34;nv&#34;&gt;RUN_DEPENDS&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;+=&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;	&lt;/span&gt;git&amp;gt;0:&lt;span class=&#34;si&#34;&gt;${&lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;PORTSDIR&lt;/span&gt;&lt;span class=&#34;si&#34;&gt;}&lt;/span&gt;/devel/git
+&lt;span class=&#34;nv&#34;&gt;RUN_DEPENDS&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;+=&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;	&lt;/span&gt;cscope&amp;gt;0:&lt;span class=&#34;si&#34;&gt;${&lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;PORTSDIR&lt;/span&gt;&lt;span class=&#34;si&#34;&gt;}&lt;/span&gt;/devel/cscope
+&lt;span class=&#34;nv&#34;&gt;RUN_DEPENDS&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;+=&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;	&lt;/span&gt;vim-lite&amp;gt;0:&lt;span class=&#34;si&#34;&gt;${&lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;PORTSDIR&lt;/span&gt;&lt;span class=&#34;si&#34;&gt;}&lt;/span&gt;/editors/vim-lite
 
-&lt;span class=&quot;nf&quot;&gt;do-install&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;build&lt;/span&gt;
-	@&lt;span class=&quot;si&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;DO_NADA&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;
+&lt;span class=&#34;nf&#34;&gt;do-install&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;n&#34;&gt;build&lt;/span&gt;
+&lt;span class=&#34;w&#34;&gt;	&lt;/span&gt;@&lt;span class=&#34;si&#34;&gt;${&lt;/span&gt;&lt;span class=&#34;nv&#34;&gt;DO_NADA&lt;/span&gt;&lt;span class=&#34;si&#34;&gt;}&lt;/span&gt;
 
-&lt;span class=&quot;cp&quot;&gt;.include &amp;lt;bsd.port.mk&amp;gt;&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
+&lt;span class=&#34;cp&#34;&gt;.include &amp;lt;bsd.port.mk&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
 &lt;p&gt;Note the &lt;em&gt;RUN_DEPENDS&lt;/em&gt; line is depending on &lt;em&gt;package names&lt;/em&gt;, not &lt;em&gt;binary names&lt;/em&gt;. Any version will satisfy the dependency.&lt;/p&gt;
-&lt;h4 class=&quot;code_title&quot;&gt;/usr/ports/local/dev-meta/pkg-descr&lt;/h4&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;Development meta port
-&lt;/pre&gt;&lt;/div&gt;
-
+&lt;h4 class=&#34;code_title&#34;&gt;/usr/ports/local/dev-meta/pkg-descr&lt;/h4&gt;
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;Development meta port
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
 &lt;p&gt;The &lt;em&gt;local&lt;/em&gt; category must be defined.&lt;/p&gt;
-&lt;h4 class=&quot;code_title&quot;&gt;/etc/make.conf&lt;/h4&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;nv&quot;&gt;VALID_CATEGORIES&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt;	&lt;span class=&quot;nb&quot;&gt;local&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
+&lt;h4 class=&#34;code_title&#34;&gt;/etc/make.conf&lt;/h4&gt;
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;nv&#34;&gt;VALID_CATEGORIES&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;+=&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;	&lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;local&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
-
-&lt;h3 id=&quot;building-packages-with-poudriere&quot;&gt;Building packages with Poudriere&lt;/h3&gt;
-&lt;p&gt;&lt;a href=&quot;https://fossil.etoilebsd.net/poudriere&quot;&gt;Poudriere&lt;/a&gt; is a tool to build and test packages for FreeBSD. There is a detailed guide on &lt;a href=&quot;https://fossil.etoilebsd.net/poudriere/doc/trunk/doc/pkgng_repos.wiki&quot;&gt;creating pkgng repositories&lt;/a&gt; on the poudriere site, so I will only cover it briefly here.&lt;/p&gt;
+&lt;h3 id=&#34;building-packages-with-poudriere&#34;&gt;Building packages with Poudriere&lt;/h3&gt;
+&lt;p&gt;&lt;a href=&#34;https://fossil.etoilebsd.net/poudriere&#34;&gt;Poudriere&lt;/a&gt; is a tool to build and test packages for FreeBSD. There is a detailed guide on &lt;a href=&#34;https://fossil.etoilebsd.net/poudriere/doc/trunk/doc/pkgng_repos.wiki&#34;&gt;creating pkgng repositories&lt;/a&gt; on the poudriere site, so I will only cover it briefly here.&lt;/p&gt;
 &lt;p&gt;Install poudriere on your build machine:&lt;/p&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;gp&quot;&gt;root@build#&lt;/span&gt; make -C /usr/ports/ports-mgmt/poudriere install clean
-&lt;/pre&gt;&lt;/div&gt;
-
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;gp&#34;&gt;root@build# &lt;/span&gt;make&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-C&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;/usr/ports/ports-mgmt/poudriere&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;install&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;clean
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
 &lt;p&gt;Configure poudriere:&lt;/p&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;gp&quot;&gt;root@build#&lt;/span&gt; cat &amp;gt;&amp;gt; /usr/local/etc/poudriere.conf
-&lt;span class=&quot;go&quot;&gt;BASEFS=/poudriere&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;ZPOOL=tank&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;# Directory where the CCACHE_DIR is in the host&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;CCACHE_DIR=/usr/ccache&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;# Directory to store distfiles on the host&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;DISTFILES_CACHE=/mnt/distfiles&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;^D&lt;/span&gt;
-&lt;span class=&quot;gp&quot;&gt;root@build#&lt;/span&gt; mkdir /usr/local/etc/poudriere.d
-&lt;span class=&quot;gp&quot;&gt;root@build#&lt;/span&gt; cat &amp;gt;&amp;gt; /usr/local/etc/poudriere.d/make.conf
-&lt;span class=&quot;go&quot;&gt;WITH_PKGNG=	yes&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;^D&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;gp&#34;&gt;root@build# &lt;/span&gt;cat&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&amp;gt;&amp;gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;/usr/local/etc/poudriere.conf
+&lt;span class=&#34;go&#34;&gt;BASEFS=/poudriere&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;ZPOOL=tank&lt;/span&gt;
+&lt;span class=&#34;gp&#34;&gt;# &lt;/span&gt;Directory&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;where&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;the&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;CCACHE_DIR&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;is&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;k&#34;&gt;in&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;the&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;host
+&lt;span class=&#34;go&#34;&gt;CCACHE_DIR=/usr/ccache&lt;/span&gt;
+&lt;span class=&#34;gp&#34;&gt;# &lt;/span&gt;Directory&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;to&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;store&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;distfiles&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;on&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;the&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;host
+&lt;span class=&#34;go&#34;&gt;DISTFILES_CACHE=/mnt/distfiles&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;^D&lt;/span&gt;
+&lt;span class=&#34;gp&#34;&gt;root@build# &lt;/span&gt;mkdir&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;/usr/local/etc/poudriere.d
+&lt;span class=&#34;gp&#34;&gt;root@build# &lt;/span&gt;cat&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&amp;gt;&amp;gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;/usr/local/etc/poudriere.d/make.conf
+&lt;span class=&#34;go&#34;&gt;WITH_PKGNG=	yes&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;^D&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
 &lt;p&gt;Create a jail and import your existing &lt;em&gt;/usr/ports&lt;/em&gt; tree as &lt;em&gt;system&lt;/em&gt;:&lt;/p&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;go&quot;&gt;# Create jail&lt;/span&gt;
-&lt;span class=&quot;gp&quot;&gt;root@build#&lt;/span&gt; poudriere jail -c -j 83amd64 -v 8.3-RELEASE -a amd64
-&lt;span class=&quot;go&quot;&gt;...&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;# Add system&amp;#39;s /usr/ports into poudriere&lt;/span&gt;
-&lt;span class=&quot;gp&quot;&gt;root@build#&lt;/span&gt; poudriere ports -c -F -f none -M /usr/ports -p system
-&lt;span class=&quot;go&quot;&gt;...&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;gp&#34;&gt;# &lt;/span&gt;Create&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;jail
+&lt;span class=&#34;gp&#34;&gt;root@build# &lt;/span&gt;poudriere&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;jail&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-c&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-j&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;83amd64&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-v&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;m&#34;&gt;8&lt;/span&gt;.3-RELEASE&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-a&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;amd64
+&lt;span class=&#34;go&#34;&gt;...&lt;/span&gt;
+&lt;span class=&#34;gp&#34;&gt;# &lt;/span&gt;Add&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;system&lt;span class=&#34;err&#34;&gt;&amp;#39;&lt;/span&gt;s&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;/usr/ports&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;into&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;poudriere
+&lt;span class=&#34;gp&#34;&gt;root@build# &lt;/span&gt;poudriere&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;ports&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-c&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-F&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-f&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;none&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-M&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;/usr/ports&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-p&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;system
+&lt;span class=&#34;go&#34;&gt;...&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
 &lt;p&gt;Pick options for your meta package and dependencies:&lt;/p&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;gp&quot;&gt;root@build#&lt;/span&gt; poudriere options -p system &lt;span class=&quot;nb&quot;&gt;local&lt;/span&gt;/dev-meta
-&lt;/pre&gt;&lt;/div&gt;
-
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;gp&#34;&gt;root@build# &lt;/span&gt;poudriere&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;options&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-p&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;system&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;local/dev-meta
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
 &lt;p&gt;Now build the packages from the meta port using the &lt;em&gt;system&lt;/em&gt; ports tree:&lt;/p&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;gp&quot;&gt;root@build#&lt;/span&gt; poudriere bulk -j 83amd64 -p system &lt;span class=&quot;nb&quot;&gt;local&lt;/span&gt;/dev-meta
-&lt;span class=&quot;go&quot;&gt;====&amp;gt;&amp;gt; Creating the reference jail... done&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;====&amp;gt;&amp;gt; Mounting system devices for 83amd64-system&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;====&amp;gt;&amp;gt; Mounting ports/packages/distfiles&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;====&amp;gt;&amp;gt; Mounting ccache from: /usr/ccache&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;====&amp;gt;&amp;gt; Mounting packages from: /poudriere/data/packages/83amd64-system&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;====&amp;gt;&amp;gt; Mounting /var/db/ports from: /usr/local/etc/poudriere.d/options&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;====&amp;gt;&amp;gt; Logs: /poudriere/data/logs/bulk/83amd64-system/2013-07-21_14h14m27s&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;====&amp;gt;&amp;gt; Appending to make.conf: /usr/local/etc/poudriere.d/make.conf&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;/etc/resolv.conf -&amp;gt; /poudriere/data/build/83amd64-system/ref/etc/resolv.conf&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;====&amp;gt;&amp;gt; Starting jail 83amd64-system&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;====&amp;gt;&amp;gt; Calculating ports order and dependencies&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;====&amp;gt;&amp;gt; pkg package missing, skipping sanity&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;====&amp;gt;&amp;gt; Cleaning the build queue&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;====&amp;gt;&amp;gt; Building 53 packages using 14 builders&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;====&amp;gt;&amp;gt; Starting/Cloning builders&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;====&amp;gt;&amp;gt; [01] Starting build of ports-mgmt/pkg&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;[...]&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;====&amp;gt;&amp;gt; Creating pkgng repository&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;Generating repository catalog in /packages: done!&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;====&amp;gt;&amp;gt; Cleaning up&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;====&amp;gt;&amp;gt; Umounting file systems&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;====&amp;gt;&amp;gt; Built ports: ports-mgmt/pkg devel/ccache textproc/xmlcatmgr archivers/unzip lang/perl5.14 net/p5-Socket textproc/iso8879 textproc/xmlcharent converters/libiconv devel/gettext devel/m4 devel/libtool net/p5-IO-Socket-IP security/libgpg-error security/p5-Net-SSLeay textproc/docbook-410 textproc/docbook-420 textproc/docbook-430 textproc/docbook-440 textproc/docbook-450 textproc/docbook-500 textproc/docbook-sk textproc/docbook-xml textproc/docbook-xml-430 textproc/docbook-xml-440 devel/bison devel/boehm-gc devel/gmake textproc/docbook-xml-450 devel/pkgconf security/ca_root_nss security/p5-IO-Socket-SSL misc/getopt print/libpaper security/libgcrypt shells/bash textproc/docbook textproc/docbook-xsl textproc/libxml2 textproc/libxslt www/w3m ftp/curl lang/p5-Error lang/python27 mail/p5-Net-SMTP-SSL textproc/asciidoc textproc/expat2 textproc/xmlto devel/cscope devel/cvsps devel/git editors/vim-lite local/dev-meta&lt;/span&gt;
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;gp&#34;&gt;root@build# &lt;/span&gt;poudriere&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;bulk&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-j&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;83amd64&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-p&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;system&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;local/dev-meta
+&lt;span class=&#34;go&#34;&gt;====&amp;gt;&amp;gt; Creating the reference jail... done&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;====&amp;gt;&amp;gt; Mounting system devices for 83amd64-system&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;====&amp;gt;&amp;gt; Mounting ports/packages/distfiles&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;====&amp;gt;&amp;gt; Mounting ccache from: /usr/ccache&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;====&amp;gt;&amp;gt; Mounting packages from: /poudriere/data/packages/83amd64-system&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;====&amp;gt;&amp;gt; Mounting /var/db/ports from: /usr/local/etc/poudriere.d/options&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;====&amp;gt;&amp;gt; Logs: /poudriere/data/logs/bulk/83amd64-system/2013-07-21_14h14m27s&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;====&amp;gt;&amp;gt; Appending to make.conf: /usr/local/etc/poudriere.d/make.conf&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;/etc/resolv.conf -&amp;gt; /poudriere/data/build/83amd64-system/ref/etc/resolv.conf&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;====&amp;gt;&amp;gt; Starting jail 83amd64-system&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;====&amp;gt;&amp;gt; Calculating ports order and dependencies&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;====&amp;gt;&amp;gt; pkg package missing, skipping sanity&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;====&amp;gt;&amp;gt; Cleaning the build queue&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;====&amp;gt;&amp;gt; Building 53 packages using 14 builders&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;====&amp;gt;&amp;gt; Starting/Cloning builders&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;====&amp;gt;&amp;gt; [01] Starting build of ports-mgmt/pkg&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;[...]&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;====&amp;gt;&amp;gt; Creating pkgng repository&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;Generating repository catalog in /packages: done!&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;====&amp;gt;&amp;gt; Cleaning up&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;====&amp;gt;&amp;gt; Umounting file systems&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;====&amp;gt;&amp;gt; Built ports: ports-mgmt/pkg devel/ccache textproc/xmlcatmgr archivers/unzip lang/perl5.14 net/p5-Socket textproc/iso8879 textproc/xmlcharent converters/libiconv devel/gettext devel/m4 devel/libtool net/p5-IO-Socket-IP security/libgpg-error security/p5-Net-SSLeay textproc/docbook-410 textproc/docbook-420 textproc/docbook-430 textproc/docbook-440 textproc/docbook-450 textproc/docbook-500 textproc/docbook-sk textproc/docbook-xml textproc/docbook-xml-430 textproc/docbook-xml-440 devel/bison devel/boehm-gc devel/gmake textproc/docbook-xml-450 devel/pkgconf security/ca_root_nss security/p5-IO-Socket-SSL misc/getopt print/libpaper security/libgcrypt shells/bash textproc/docbook textproc/docbook-xsl textproc/libxml2 textproc/libxslt www/w3m ftp/curl lang/p5-Error lang/python27 mail/p5-Net-SMTP-SSL textproc/asciidoc textproc/expat2 textproc/xmlto devel/cscope devel/cvsps devel/git editors/vim-lite local/dev-meta&lt;/span&gt;
 
-&lt;span class=&quot;go&quot;&gt;====&amp;gt;&amp;gt; [83amd64-system] 53 packages built, 0 failures, 0 ignored, 0 skipped&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;====&amp;gt;&amp;gt; Logs: /poudriere/data/logs/bulk/83amd64-system/2013-07-21_14h14m27s&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
+&lt;span class=&#34;go&#34;&gt;====&amp;gt;&amp;gt; [83amd64-system] 53 packages built, 0 failures, 0 ignored, 0 skipped&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;====&amp;gt;&amp;gt; Logs: /poudriere/data/logs/bulk/83amd64-system/2013-07-21_14h14m27s&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
 &lt;p&gt;The &lt;em&gt;/poudriere/data/packages/83amd64-system&lt;/em&gt; directory now contains the pkgng repository that needs to be served. This can be done over NFS, Samba, HTTP, FTP, etc. It is best to serve the &lt;em&gt;/poudriere/data/packages&lt;/em&gt; directory and create symlinks of the ABI name to the target. The ABI is a pkgng feature defined as &lt;em&gt;OS:REL:ARCH:BITS&lt;/em&gt;. For instance, this build would be &lt;em&gt;freebsd:8:x86:64&lt;/em&gt;.&lt;/p&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;gp&quot;&gt;root@build#&lt;/span&gt; ln -s 83amd64-system /poudriere/data/packages/freebsd:8:x86:64
-&lt;/pre&gt;&lt;/div&gt;
-
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;gp&#34;&gt;root@build# &lt;/span&gt;ln&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-s&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;83amd64-system&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;/poudriere/data/packages/freebsd:8:x86:64
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
 &lt;p&gt;The repository is now ready for use on the target servers.&lt;/p&gt;
-&lt;h2 id=&quot;role-based-servers-with-packages&quot;&gt;Role based servers with packages&lt;/h2&gt;
+&lt;h2 id=&#34;role-based-servers-with-packages&#34;&gt;Role based servers with packages&lt;/h2&gt;
 &lt;p&gt;On the target server, the appropriate meta packages just need to be installed now.&lt;/p&gt;
 &lt;p&gt;First bootstrap the system with pkg if needed.&lt;/p&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;gp&quot;&gt;root@dev#&lt;/span&gt; mkdir -p /usr/local/etc
-&lt;span class=&quot;gp&quot;&gt;root@dev#&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&amp;#39;PACKAGESITE=http://packages.domain.com/${ABI}&amp;#39;&lt;/span&gt; &amp;gt; /usr/local/etc/pkg.conf
-&lt;span class=&quot;gp&quot;&gt;root@dev#&lt;/span&gt; pkg -v
-&lt;span class=&quot;go&quot;&gt;The package management tool is not yet installed on your system.&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;Do you want to fetch and install it now? [y/N]: y&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;Bootstrapping pkg please wait&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;Installing pkg-1.1.4... done&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;If you are upgrading from the old package format, first run:&lt;/span&gt;
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;gp&#34;&gt;root@dev# &lt;/span&gt;mkdir&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-p&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;/usr/local/etc
+&lt;span class=&#34;gp&#34;&gt;root@dev# &lt;/span&gt;&lt;span class=&#34;nb&#34;&gt;echo&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;s1&#34;&gt;&amp;#39;PACKAGESITE=http://packages.domain.com/${ABI}&amp;#39;&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&amp;gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;/usr/local/etc/pkg.conf
+&lt;span class=&#34;gp&#34;&gt;root@dev# &lt;/span&gt;pkg&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-v
+&lt;span class=&#34;go&#34;&gt;The package management tool is not yet installed on your system.&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;Do you want to fetch and install it now? [y/N]: y&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;Bootstrapping pkg please wait&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;Installing pkg-1.1.4... done&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;If you are upgrading from the old package format, first run:&lt;/span&gt;
 
-&lt;span class=&quot;go&quot;&gt;  # pkg2ng&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;1.1.4&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
+&lt;span class=&#34;gp&#34;&gt;  # &lt;/span&gt;pkg2ng
+&lt;span class=&#34;go&#34;&gt;1.1.4&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
 &lt;p&gt;Now the &lt;code&gt;local/dev-meta&lt;/code&gt; package can be installed:&lt;/p&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;gp&quot;&gt;root@dev#&lt;/span&gt; pkg install &lt;span class=&quot;nb&quot;&gt;local&lt;/span&gt;/dev-meta
-&lt;span class=&quot;go&quot;&gt;digests.txz                                                        100%   57KB  57.1KB/s  57.1KB/s   00:00&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;packagesite.txz                                                    100%  323KB 323.3KB/s 323.3KB/s   00:00&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;Incremental update completed, 0 packages processed:&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;0 packages updated, 0 removed and 53 added.&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;The following 42 packages will be installed:&lt;/span&gt;
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;gp&#34;&gt;root@dev# &lt;/span&gt;pkg&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;install&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;local/dev-meta
+&lt;span class=&#34;go&#34;&gt;digests.txz                                                        100%   57KB  57.1KB/s  57.1KB/s   00:00&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;packagesite.txz                                                    100%  323KB 323.3KB/s 323.3KB/s   00:00&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;Incremental update completed, 0 packages processed:&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;0 packages updated, 0 removed and 53 added.&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;The following 42 packages will be installed:&lt;/span&gt;
 
-&lt;span class=&quot;go&quot;&gt;	Installing libiconv: 1.14_1&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing xproto: 7.0.24&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing renderproto: 0.11.1&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing libXdmcp: 1.1.1&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing libXau: 1.0.8&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing pkgconf: 0.9.2_1&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing libpthread-stubs: 0.3_3&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing kbproto: 1.0.6&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing expat: 2.0.1_2&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing freetype2: 2.4.12_1&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing tcl: 8.5.14_1&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing openssl: 1.0.1_8&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing db42: 4.2.52_5&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing perl: 5.14.4&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing pcre: 8.33&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing libssh2: 1.4.3_1,2&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing ca_root_nss: 3.15.1&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing p5-Net-SMTP-SSL: 1.01_1&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing p5-Error: 0.17020&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing curl: 7.31.0&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing sqlite3: 3.7.17_1&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing p5-Term-ReadKey: 2.30&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing cvsps: 2.1_1&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing cscope: 15.8a&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing gettext: 0.18.3&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing libxml2: 2.8.0_2&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing fontconfig: 2.9.0,1&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing gdbm: 1.10&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing python27: 2.7.5_1&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing vim-lite: 7.3.1314_2&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing libxcb: 1.9.1&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing libX11: 1.6.0,1&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing apr: 1.4.8.1.5.2&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing apache22-worker-mpm: 2.2.25&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing libXrender: 0.9.8&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing libXft: 2.3.1&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing serf: 1.2.1_1&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing subversion: 1.8.0_3&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing p5-subversion: 1.8.0_3&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing tk: 8.5.14_1&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing git: 1.8.3.3_1&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;	Installing local-dev-meta: 20130719&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing libiconv: 1.14_1&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing xproto: 7.0.24&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing renderproto: 0.11.1&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing libXdmcp: 1.1.1&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing libXau: 1.0.8&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing pkgconf: 0.9.2_1&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing libpthread-stubs: 0.3_3&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing kbproto: 1.0.6&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing expat: 2.0.1_2&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing freetype2: 2.4.12_1&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing tcl: 8.5.14_1&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing openssl: 1.0.1_8&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing db42: 4.2.52_5&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing perl: 5.14.4&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing pcre: 8.33&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing libssh2: 1.4.3_1,2&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing ca_root_nss: 3.15.1&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing p5-Net-SMTP-SSL: 1.01_1&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing p5-Error: 0.17020&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing curl: 7.31.0&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing sqlite3: 3.7.17_1&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing p5-Term-ReadKey: 2.30&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing cvsps: 2.1_1&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing cscope: 15.8a&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing gettext: 0.18.3&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing libxml2: 2.8.0_2&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing fontconfig: 2.9.0,1&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing gdbm: 1.10&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing python27: 2.7.5_1&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing vim-lite: 7.3.1314_2&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing libxcb: 1.9.1&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing libX11: 1.6.0,1&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing apr: 1.4.8.1.5.2&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing apache22-worker-mpm: 2.2.25&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing libXrender: 0.9.8&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing libXft: 2.3.1&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing serf: 1.2.1_1&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing subversion: 1.8.0_3&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing p5-subversion: 1.8.0_3&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing tk: 8.5.14_1&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing git: 1.8.3.3_1&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;	Installing local-dev-meta: 20130719&lt;/span&gt;
 
-&lt;span class=&quot;go&quot;&gt;The installation will require 433 MB more space&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;The installation will require 433 MB more space&lt;/span&gt;
 
-&lt;span class=&quot;go&quot;&gt;53 MB to be downloaded&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;53 MB to be downloaded&lt;/span&gt;
 
-&lt;span class=&quot;go&quot;&gt;Proceed with installing packages [y/N]: y&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;...&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
+&lt;span class=&#34;go&#34;&gt;Proceed with installing packages [y/N]: y&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;...&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
 &lt;p&gt;Only 2 packages were directly installed, so only those 2 show as non-automatic and will not be removed by &lt;code&gt;pkg autoremove&lt;/code&gt;:&lt;/p&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;gp&quot;&gt;root@dev#&lt;/span&gt; pkg query -e &lt;span class=&quot;s1&quot;&gt;&amp;#39;%a = 0&amp;#39;&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&amp;#39;%o&amp;#39;&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;ports-mgmt/pkg&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;local/dev-meta&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;gp&#34;&gt;root@dev# &lt;/span&gt;pkg&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;query&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;-e&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;s1&#34;&gt;&amp;#39;%a = 0&amp;#39;&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;s1&#34;&gt;&amp;#39;%o&amp;#39;&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;ports-mgmt/pkg&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;local/dev-meta&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
 &lt;p&gt;This simplifies maintenance of the server and ensures all servers using this meta package will have the same packages installed on them. When needing to add or remove a dependency from the meta package, just update the &lt;em&gt;/usr/ports/local/dev-meta/Makefile&lt;/em&gt; on the build server, bump the &lt;em&gt;PORTREVISION&lt;/em&gt; or &lt;em&gt;PORTVERSION&lt;/em&gt; and then rebuild with &lt;code&gt;poudriere bulk&lt;/code&gt;. Once that is completed, run &lt;code&gt;pkg upgrade&lt;/code&gt; and &lt;code&gt;pkg autoremove&lt;/code&gt; on the target servers. This will install new dependencies, upgrading existing, and then remove any that are no longer needed on on that server.&lt;/p&gt;
 
@@ -592,18 +563,18 @@ Copyright 2013-07-21 Bryan Drewery</content>
     <author>
       <name>Bryan Drewery</name>
     </author>
-    <content type="html">&lt;p&gt;For additional security layers and separation, I run my web applications inside of dedicated jails. This has been an ongoing progression for me. I will layout where I started, where I progressed, and how I do it now.
-&lt;!--more--&gt;&lt;/p&gt;
-&lt;h2 id=&quot;apachemod95php&quot;&gt;Apache+mod_php&lt;/h2&gt;
+    <content type="html">&lt;p&gt;For additional security layers and separation, I run my web applications inside of dedicated jails. This has been an ongoing progression for me. I will layout where I started, where I progressed, and how I do it now.&lt;/p&gt;
+
+&lt;h2 id=&#34;apachemod_php&#34;&gt;Apache+mod_php&lt;/h2&gt;
 &lt;p&gt;Originally, I would run all applications under &lt;em&gt;www&lt;/em&gt; user using apache+mod_php. This was the classic LAMP approach and the most simple approach to hosting a web application. It is also the most insecure if you are hosting more than 1 user or application. If you are running apache as &lt;em&gt;root&lt;/em&gt; then you have effectively given root to the world.&lt;/p&gt;
 &lt;p&gt;The biggest problem with this is that every application is executing code as the user that apache is running as. So that &amp;ldquo;secure&amp;rdquo; &lt;em&gt;config.php&lt;/em&gt; file with some user or application&amp;rsquo;s private db credentials in can easily be read by another. This creates a very easy attack vector for taking over another site on a shared system. Just sign-up and read in the file. You now can grant yourself administrative rights on their application by connecting directly to the DB.&lt;/p&gt;
 &lt;p&gt;Even if you are not doing &amp;ldquo;shared hosting&amp;rdquo;, this makes every application on your system as weak as the weakest application running under &lt;em&gt;www&lt;/em&gt;.&lt;/p&gt;
 &lt;p&gt;A better approach is to create a dedicated user for every application, or to run an application under the user whos &lt;em&gt;public_html&lt;/em&gt; it is in.&lt;/p&gt;
-&lt;h2 id=&quot;apachesuphp&quot;&gt;Apache+suphp&lt;/h2&gt;
-&lt;p&gt;An option which was mostly viable up until 2009 was suPHP. It allows executing an application using a setuid wrapper using the php-cli interface. Due to its &lt;a href=&quot;http://permalink.gmane.org/gmane.comp.php.suphp.general/1151&quot;&gt;EoL&lt;/a&gt; status, maintenance history, requiring setuid root, and poor performance, I would not recommend using this for new projects.&lt;/p&gt;
-&lt;h2 id=&quot;apachemod_fcgisuexecphp-cgi&quot;&gt;Apache+mod_fcgi+suexec+php-cgi&lt;/h2&gt;
+&lt;h2 id=&#34;apachesuphp&#34;&gt;Apache+suphp&lt;/h2&gt;
+&lt;p&gt;An option which was mostly viable up until 2009 was suPHP. It allows executing an application using a setuid wrapper using the php-cli interface. Due to its &lt;a href=&#34;http://permalink.gmane.org/gmane.comp.php.suphp.general/1151&#34;&gt;EoL&lt;/a&gt; status, maintenance history, requiring setuid root, and poor performance, I would not recommend using this for new projects.&lt;/p&gt;
+&lt;h2 id=&#34;apachemod_fcgisuexecphp-cgi&#34;&gt;Apache+mod_fcgi+suexec+php-cgi&lt;/h2&gt;
 &lt;p&gt;The next step for me was primarily focused on improving the performance of suphp. This resulted in using mod_fcgi to spawn a CGI process for the application and interact with that. This avoided startup overhead. It&amp;rsquo;s still poor though as it requires the setuid binary and is much more complex since it involved mod_fcgi and an extra wrapper script.&lt;/p&gt;
-&lt;h2 id=&quot;nginxphp-fpm&quot;&gt;nginx+php-fpm&lt;/h2&gt;
+&lt;h2 id=&#34;nginxphp-fpm&#34;&gt;nginx+php-fpm&lt;/h2&gt;
 &lt;p&gt;This setup works very well in terms of security and performance. A separate php-fpm instance is spawned for each site. I assign each application a dedicated user. The php-fpm processes run as this user and create a CGI interface for nginx to connect to. This can be taken 1 step further with each application in its own jail, to further protect the host system. The jails are configured without WAN access; they only have LAN access and only in a small subnet dedicated for nginx to connect to the jail with.&lt;/p&gt;
 &lt;p&gt;In the next part I will cover exactly how this is setup.&lt;/p&gt;
 
@@ -619,25 +590,24 @@ Copyright 2013-07-17 Bryan Drewery</content>
       <name>Bryan Drewery</name>
     </author>
     <content type="html">&lt;p&gt;For years I have ran into this error while running &lt;code&gt;make installworld&lt;/code&gt;:&lt;/p&gt;
-&lt;div class=&quot;codehilite&quot;&gt;&lt;pre&gt;&lt;span class=&quot;gp&quot;&gt;#&lt;/span&gt; make installworld
-&lt;span class=&quot;go&quot;&gt;[...]&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;===&amp;gt; sys/boot/i386/boot2 (install)&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;cc -Os  -fno-guess-branch-probability  -fomit-frame-pointer  -fno-unit-at-a-time  -mno-align-long-strings  -mrtd  -mregparm=3  -DUSE_XREAD  -DUFS1_AND_UFS2  -DFLAGS=0x80  -DSIOPRT=0x3f8  -DSIOFMT=0x3  -DSIOSPD=9600  -I/usr/src/sys/boot/i386/boot2/../../common  -I/usr/src/sys/boot/i386/boot2/../btx/lib -I.  -Wall -Waggregate-return -Wbad-function-cast -Wcast-align  -Wmissing-declarations -Wmissing-prototypes -Wnested-externs  -Wpointer-arith -Wshadow -Wstrict-prototypes -Wwrite-strings  -Winline --param max-inline-insns-single=100   -march=i386 -ffreestanding -mpreferred-stack-boundary=2  -mno-mmx -mno-3dnow -mno-sse -mno-sse2 -mno-sse3 -msoft-float -m32 -std=gnu99    -S -o boot2.s.tmp /usr/src/sys/boot/i386/boot2/boot2.c&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;sed -e &amp;#39;/align/d&amp;#39; -e &amp;#39;/nop/d&amp;#39; &amp;lt; boot2.s.tmp &amp;gt; boot2.s&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;rm -f boot2.s.tmp&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;cc  -m32 -c boot2.s&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;ld -static -N --gc-sections -nostdlib -m elf_i386_fbsd -Ttext 0x2000 -o boot2.out /usr/obj/usr/src/sys/boot/i386/boot2/../btx/lib/crt0.o boot2.o sio.o&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;objcopy -S -O binary boot2.out boot2.bin&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;btxld -v -E 0x2000 -f bin -b /usr/obj/usr/src/sys/boot/i386/boot2/../btx/btx/btx -l boot2.ldr  -o boot2.ld -P 1 boot2.bin&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;btxld: No such file or directory&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;*** [boot2.ld] Error code 1&lt;/span&gt;
+&lt;div class=&#34;codehilite&#34;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class=&#34;gp&#34;&gt;# &lt;/span&gt;make&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;installworld
+&lt;span class=&#34;go&#34;&gt;[...]&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;===&amp;gt; sys/boot/i386/boot2 (install)&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;cc -Os  -fno-guess-branch-probability  -fomit-frame-pointer  -fno-unit-at-a-time  -mno-align-long-strings  -mrtd  -mregparm=3  -DUSE_XREAD  -DUFS1_AND_UFS2  -DFLAGS=0x80  -DSIOPRT=0x3f8  -DSIOFMT=0x3  -DSIOSPD=9600  -I/usr/src/sys/boot/i386/boot2/../../common  -I/usr/src/sys/boot/i386/boot2/../btx/lib -I.  -Wall -Waggregate-return -Wbad-function-cast -Wcast-align  -Wmissing-declarations -Wmissing-prototypes -Wnested-externs  -Wpointer-arith -Wshadow -Wstrict-prototypes -Wwrite-strings  -Winline --param max-inline-insns-single=100   -march=i386 -ffreestanding -mpreferred-stack-boundary=2  -mno-mmx -mno-3dnow -mno-sse -mno-sse2 -mno-sse3 -msoft-float -m32 -std=gnu99    -S -o boot2.s.tmp /usr/src/sys/boot/i386/boot2/boot2.c&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;sed -e &amp;#39;/align/d&amp;#39; -e &amp;#39;/nop/d&amp;#39; &amp;lt; boot2.s.tmp &amp;gt; boot2.s&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;rm -f boot2.s.tmp&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;cc  -m32 -c boot2.s&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;ld -static -N --gc-sections -nostdlib -m elf_i386_fbsd -Ttext 0x2000 -o boot2.out /usr/obj/usr/src/sys/boot/i386/boot2/../btx/lib/crt0.o boot2.o sio.o&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;objcopy -S -O binary boot2.out boot2.bin&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;btxld -v -E 0x2000 -f bin -b /usr/obj/usr/src/sys/boot/i386/boot2/../btx/btx/btx -l boot2.ldr  -o boot2.ld -P 1 boot2.bin&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;btxld: No such file or directory&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;*** [boot2.ld] Error code 1&lt;/span&gt;
 
-&lt;span class=&quot;go&quot;&gt;Stop in /usr/src/sys/boot/i386/boot2.&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;*** [realinstall] Error code 1&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
+&lt;span class=&#34;go&#34;&gt;Stop in /usr/src/sys/boot/i386/boot2.&lt;/span&gt;
+&lt;span class=&#34;go&#34;&gt;*** [realinstall] Error code 1&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
-
-&lt;p&gt;This has &lt;a href=&quot;http://lists.freebsd.org/pipermail/freebsd-current/2010-June/018292.html&quot;&gt;come&lt;/a&gt;, &lt;a href=&quot;http://lists.freebsd.org/pipermail/freebsd-amd64/2006-September/008849.html&quot;&gt;up&lt;/a&gt;, &lt;a href=&quot;http://lists.freebsd.org/pipermail/freebsd-amd64/2004-August/001906.html&quot;&gt;before&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;This has &lt;a href=&#34;http://lists.freebsd.org/pipermail/freebsd-current/2010-June/018292.html&#34;&gt;come&lt;/a&gt;, &lt;a href=&#34;http://lists.freebsd.org/pipermail/freebsd-amd64/2006-September/008849.html&#34;&gt;up&lt;/a&gt;, &lt;a href=&#34;http://lists.freebsd.org/pipermail/freebsd-amd64/2004-August/001906.html&#34;&gt;before&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;Most of the posts mention bad timestamps or incorrect date. I&amp;rsquo;ve always been running ntpd though and running &lt;code&gt;make buildworld&lt;/code&gt; before &lt;code&gt;make installworld&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;My longterm workaround was to &lt;code&gt;make -C /usr/src/sys/boot/i386&lt;/code&gt; before running &lt;code&gt;make installworld&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;Recently this workaround stopped working for me. Looking into it more, I realized that I was applying custom patches to the src tree and then removing them before &lt;code&gt;make installworld&lt;/code&gt;. This was changing timestamps of source files, causing a rebuild during &lt;code&gt;make installworld&lt;/code&gt;. Changing my scripts to leave the patch applied until after everything is installed solves it.&lt;/p&gt;

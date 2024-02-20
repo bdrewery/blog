@@ -6,15 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Bootstrap -->
-    <link href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.2/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="/static/blog.css"></link>
 <link rel="stylesheet" href="/static/pygments.css"></link>
 
 
-<!--[if lt IE 9]>
-      <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.min.js"></script>
-      <script src="//cdnjs.cloudflare.com/ajax/libs/respond.js/1.4.2/respond.min.js"></script>
-<![endif]-->
+    <!--[if lt IE 9]>
+          <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
+          <script src="//cdnjs.cloudflare.com/ajax/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
 
 <link rel="shortcut icon" href="/static/favicon.ico">
 <link href="/recent.atom"
@@ -169,7 +169,7 @@
           
         </ul>
       </div>
-      <div class="panel-body"><span itemprop="description"><p>The best way to sandbox a web application is in a FreeBSD jail. Taking this a step further and placing a caching nginx reverse proxy in front of it can increase performance. The backend application server does not need to be on the same server as the internet-facing application server.
+      <div class="panel-body"><span itemprop="description"><p>The best way to sandbox a web application is in a FreeBSD jail. Taking this a step further and placing a caching nginx reverse proxy in front of it can increase performance. The backend application server does not need to be on the same server as the internet-facing application server.</p>
 </span><a href="/posts/2013-11-27-sandboxing-php-part2/">Read more...</a></div>
     </div>
     </li>
@@ -222,7 +222,7 @@
           
         </ul>
       </div>
-      <div class="panel-body"><span itemprop="description"><p>To simplify server management I create &ldquo;meta&rdquo; packages in FreeBSD ports that can generate a package with only dependencies on other packages. This allows to me to just install this 1 package on the target server and have it pull in all of the packages that I want on there. I assign each server specific &ldquo;roles&rdquo; and only install 1 or 2 packages per server depending on which roles they fulfill. The roles may be one of &ldquo;dev&rdquo;, &ldquo;web&rdquo;, &ldquo;ports-dev&rdquo;, &ldquo;jail&rdquo;, etc. This ensures that all servers fulfilling specific roles will always have the proper packages installed. For some applications, I use a dedicated jail with a meta package that only pulls in the required dependencies for that application to run. For instance, on a PHP application jail, the meta package may pull in nginx, php, eaccelerator, git, etc.
+      <div class="panel-body"><span itemprop="description"><p>To simplify server management I create &ldquo;meta&rdquo; packages in FreeBSD ports that can generate a package with only dependencies on other packages. This allows to me to just install this 1 package on the target server and have it pull in all of the packages that I want on there. I assign each server specific &ldquo;roles&rdquo; and only install 1 or 2 packages per server depending on which roles they fulfill. The roles may be one of &ldquo;dev&rdquo;, &ldquo;web&rdquo;, &ldquo;ports-dev&rdquo;, &ldquo;jail&rdquo;, etc. This ensures that all servers fulfilling specific roles will always have the proper packages installed. For some applications, I use a dedicated jail with a meta package that only pulls in the required dependencies for that application to run. For instance, on a PHP application jail, the meta package may pull in nginx, php, eaccelerator, git, etc.</p>
 </span><a href="/posts/2013-07-21-managing-role-based-freebsd-servers-with-meta-packages-and-poudriere/">Read more...</a></div>
     </div>
     </li>
@@ -287,7 +287,7 @@
           
         </ul>
       </div>
-      <div class="panel-body"><span itemprop="description"><p>For additional security layers and separation, I run my web applications inside of dedicated jails. This has been an ongoing progression for me. I will layout where I started, where I progressed, and how I do it now.
+      <div class="panel-body"><span itemprop="description"><p>For additional security layers and separation, I run my web applications inside of dedicated jails. This has been an ongoing progression for me. I will layout where I started, where I progressed, and how I do it now.</p>
 </span><a href="/posts/2013-07-17-sandboxing-php-part1/">Read more...</a></div>
     </div>
     </li>
@@ -323,7 +323,7 @@
         </ul>
       </div>
       <div class="panel-body"><span itemprop="description"><p>For years I have ran into this error while running <code>make installworld</code>:</p>
-<div class="codehilite"><pre><span class="gp">#</span> make installworld
+<div class="codehilite"><pre><span></span><code><span class="gp"># </span>make<span class="w"> </span>installworld
 <span class="go">[...]</span>
 <span class="go">===&gt; sys/boot/i386/boot2 (install)</span>
 <span class="go">cc -Os  -fno-guess-branch-probability  -fomit-frame-pointer  -fno-unit-at-a-time  -mno-align-long-strings  -mrtd  -mregparm=3  -DUSE_XREAD  -DUFS1_AND_UFS2  -DFLAGS=0x80  -DSIOPRT=0x3f8  -DSIOFMT=0x3  -DSIOSPD=9600  -I/usr/src/sys/boot/i386/boot2/../../common  -I/usr/src/sys/boot/i386/boot2/../btx/lib -I.  -Wall -Waggregate-return -Wbad-function-cast -Wcast-align  -Wmissing-declarations -Wmissing-prototypes -Wnested-externs  -Wpointer-arith -Wshadow -Wstrict-prototypes -Wwrite-strings  -Winline --param max-inline-insns-single=100   -march=i386 -ffreestanding -mpreferred-stack-boundary=2  -mno-mmx -mno-3dnow -mno-sse -mno-sse2 -mno-sse3 -msoft-float -m32 -std=gnu99    -S -o boot2.s.tmp /usr/src/sys/boot/i386/boot2/boot2.c</span>
@@ -338,8 +338,7 @@
 
 <span class="go">Stop in /usr/src/sys/boot/i386/boot2.</span>
 <span class="go">*** [realinstall] Error code 1</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>This has <a href="http://lists.freebsd.org/pipermail/freebsd-current/2010-June/018292.html">come</a>, <a href="http://lists.freebsd.org/pipermail/freebsd-amd64/2006-September/008849.html">up</a>, <a href="http://lists.freebsd.org/pipermail/freebsd-amd64/2004-August/001906.html">before</a>.</p>
 <p>Most of the posts mention bad timestamps or incorrect date. I&rsquo;ve always been running ntpd though and running <code>make buildworld</code> before <code>make installworld</code>.</p>
@@ -394,14 +393,14 @@
   </div>
   <footer class="footer">
     
-    <p class="text-right">Copyright &copy; 2013-2015 Bryan Drewery</p></footer>
+    <p class="text-right">Copyright &copy; 2013-2024 Bryan Drewery</p></footer>
 </div>
 
 
     
 
-    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.2/js/bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
 
   </body>

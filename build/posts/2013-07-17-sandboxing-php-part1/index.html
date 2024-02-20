@@ -6,15 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Bootstrap -->
-    <link href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.2/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="/static/blog.css"></link>
 <link rel="stylesheet" href="/static/pygments.css"></link>
 
 
-<!--[if lt IE 9]>
-      <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.min.js"></script>
-      <script src="//cdnjs.cloudflare.com/ajax/libs/respond.js/1.4.2/respond.min.js"></script>
-<![endif]-->
+    <!--[if lt IE 9]>
+          <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
+          <script src="//cdnjs.cloudflare.com/ajax/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
 
 <link rel="shortcut icon" href="/static/favicon.ico">
 <link href="/recent.atom"
@@ -127,9 +127,10 @@
       </ul>
     </div>
   </div>
-  <p>For additional security layers and separation, I run my web applications inside of dedicated jails. This has been an ongoing progression for me. I will layout where I started, where I progressed, and how I do it now.
-<!--more--></p>
-<h2 id="apachemod95php">Apache+mod_php</h2>
+  <p>For additional security layers and separation, I run my web applications inside of dedicated jails. This has been an ongoing progression for me. I will layout where I started, where I progressed, and how I do it now.</p>
+<!--more-->
+
+<h2 id="apachemod_php">Apache+mod_php</h2>
 <p>Originally, I would run all applications under <em>www</em> user using apache+mod_php. This was the classic LAMP approach and the most simple approach to hosting a web application. It is also the most insecure if you are hosting more than 1 user or application. If you are running apache as <em>root</em> then you have effectively given root to the world.</p>
 <p>The biggest problem with this is that every application is executing code as the user that apache is running as. So that &ldquo;secure&rdquo; <em>config.php</em> file with some user or application&rsquo;s private db credentials in can easily be read by another. This creates a very easy attack vector for taking over another site on a shared system. Just sign-up and read in the file. You now can grant yourself administrative rights on their application by connecting directly to the DB.</p>
 <p>Even if you are not doing &ldquo;shared hosting&rdquo;, this makes every application on your system as weak as the weakest application running under <em>www</em>.</p>
@@ -186,15 +187,15 @@
   </div>
   <footer class="footer">
     
-    <p class="text-right">Copyright &copy; 2013-2015 Bryan Drewery</p></footer>
+    <p class="text-right">Copyright &copy; 2013-2024 Bryan Drewery</p></footer>
 </div>
 
 
     
 
 
-    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.2/js/bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
 
 <script type="text/javascript">

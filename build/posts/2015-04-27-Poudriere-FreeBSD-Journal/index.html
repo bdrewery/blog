@@ -6,15 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Bootstrap -->
-    <link href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.2/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="/static/blog.css"></link>
 <link rel="stylesheet" href="/static/pygments.css"></link>
 
 
-<!--[if lt IE 9]>
-      <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.min.js"></script>
-      <script src="//cdnjs.cloudflare.com/ajax/libs/respond.js/1.4.2/respond.min.js"></script>
-<![endif]-->
+    <!--[if lt IE 9]>
+          <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
+          <script src="//cdnjs.cloudflare.com/ajax/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
 
 <link rel="shortcut icon" href="/static/favicon.ico">
 <link href="/recent.atom"
@@ -124,8 +124,9 @@
   <p>This article appeared in the 2014 March/April edition of the <a href="https://www.freebsdfoundation.org/journal">FreeBSD Journal</a>. It is presented in its original form and is not up-to-date.</p>
 <h1 id="poudriere">Poudriere</h1>
 <p>Stop using portmaster, portupgrade and ports on your servers and switch to packages.</p>
-<p>Setting up your own package builds with Poudriere takes only a few minutes and will save you a lot of time in the future. 
-<!--more--></p>
+<p>Setting up your own package builds with Poudriere takes only a few minutes and will save you a lot of time in the future. </p>
+<!--more-->
+
 <p>Since November 2013, FreeBSD has provided official packages for Pkg, formerly known as pkgng. The 10.0 release also brought the first signed packages. The project uses <a href="https://www.github.com/freebsd/poudriere">Poudriere</a> for package building. </p>
 <h2 id="why-use-packages">Why Use Packages</h2>
 <p>If you are maintaining more than one FreeBSD system and are not using packages already, you should. I maintain only 20 servers, but building ports on each system took a lot of my time and wasted resources on production machines. When building ports on multiple servers, it is very easy to get their options or versions out of sync. By building packages once on one system, I lessened the load on my systems, lessened the amount of work I had to do and made all my systems consistent. Instead of dealing with the same failure on each system, I only need to handle it on the build system.</p>
@@ -143,7 +144,7 @@
 <strong>Poudriere 3.1 web interface preview.</strong></p>
 <p>Poudriere also has a feature called a &ldquo;set&rdquo;. This allows having multiple saved options, <em>make.conf</em> files and resulting package sets for each named &ldquo;set&rdquo;. This removes the need to have multiple jails for the same target version/architecture. For example, this can be used to create a PHP 5.3 package set named &ldquo;php53&rdquo; and a PHP 5.5 package set named &ldquo;php55&rdquo; using one jail on the build system. When building the set would be specified with <code>-z setname</code>, i.e. <code>bulk -z php53 -j 91amd64</code> would produce packages in <em>/usr/local/poudriere/data/packages/91amd64-default-91amd64</em>. The &ldquo;default&rdquo; refers to the ports tree, which can also be changed with the <code>-p</code> option.</p>
 <p>The upcoming Poudriere 3.1 release also brings some interesting new features. One of the major ones is named <strong>ATOMIC_PACKAGE_REPOSITORY</strong>. It prevents the repository from being modified until a build is completed. Currently in 3.0 the repository has packages deleted at startup and packages being modified during build, thus disallowing serving it directly over http. This is enabled by default. It works by hard-link copying the package directory into a .building directory during startup, then when the build completes the .building directory is renamed to a <em>.real_TIMESTAMP</em> directory and the top-level <em>.latest</em> symlink in the repository is updated to point to the new build. There are still potential problems with changing the repository during a pkg upgrade job, but the window for problems is far smaller than without this.</p>
-<div class="codehilite"><pre><span class="go">/usr/packages/exp-91amd64-commit-test # ls -al</span>
+<div class="codehilite"><pre><span></span><code><span class="go">/usr/packages/exp-91amd64-commit-test # ls -al</span>
 <span class="go">total 13</span>
 <span class="go">drwxr-xr-x   7 root  wheel  12 Mar  2 01:59 ./</span>
 <span class="go">drwxr-x--x  26 root  wheel  32 Mar  2 01:13 ../</span>
@@ -157,46 +158,44 @@
 <span class="go">lrwxr-xr-x   1 root  wheel  14 Nov 19 17:20 Latest@ -&gt; .latest/Latest</span>
 <span class="go">lrwxr-xr-x   1 root  wheel  19 Nov 19 17:20 digests.txz@ -&gt; .latest/digests.txz</span>
 <span class="go">lrwxr-xr-x   1 root  wheel  23 Nov 19 17:20 packagesite.txz@ -&gt; .latest/packagesite.txz</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>This feature also allows doing dry-runs with bulk to see what would be done by using <code>bulk -n</code>.</p>
 <p>Atomic package repository also allows keeping old package sets. This is not enabled by default but can be enabled by setting <strong>KEEP_OLD_PACKAGES</strong> and <strong>KEEP_OLD_PACKAGES_COUNT</strong>. By default 5 sets are kept. With this you could rollback a system by changing the .latest symlink to an old set and then running <code>pkg upgrade -f</code> on a server force it to reinstall all packages from the remote repository. This would downgrade all to the old set.</p>
 <p>Another upcoming feature for 3.1 is named poudriered. It will allow non-root usage of poudriere through a socket to a root daemon. This will allow queueing jobs, as well as queueing a job for all jails. It is configurable in a similar way as sudo to be able to restrict subcommands and even arguments to specific users and groups. More improvements, such as daemon privilege separation, are planned for 3.2/4.0.</p>
 <p>Setup and usage of poudriere is simple and fast. Install poudriere, create a jail, checkout a ports tree, create a file with a list of ports, optionally create a private/public keypair for a signed repository and then build!</p>
-<div class="codehilite"><pre><span class="go">$ pkg install ports-mgmt/poudriere</span>
-<span class="go">$ cp /usr/local/etc/poudriere.conf.sample /usr/local/etc/poudriere.conf</span>
-<span class="go"># Modify configuration.</span>
-<span class="go">$ vim /usr/local/etc/poudriere.conf</span>
-<span class="go"># Create a ports tree in /usr/local/poudriere/ports/default</span>
-<span class="go">$ poudriere ports -c -m svn+https</span>
+<div class="codehilite"><pre><span></span><code><span class="gp">$ </span>pkg<span class="w"> </span>install<span class="w"> </span>ports-mgmt/poudriere
+<span class="gp">$ </span>cp<span class="w"> </span>/usr/local/etc/poudriere.conf.sample<span class="w"> </span>/usr/local/etc/poudriere.conf
+<span class="gp"># </span>Modify<span class="w"> </span>configuration.
+<span class="gp">$ </span>vim<span class="w"> </span>/usr/local/etc/poudriere.conf
+<span class="gp"># </span>Create<span class="w"> </span>a<span class="w"> </span>ports<span class="w"> </span>tree<span class="w"> </span><span class="k">in</span><span class="w"> </span>/usr/local/poudriere/ports/default
+<span class="gp">$ </span>poudriere<span class="w"> </span>ports<span class="w"> </span>-c<span class="w"> </span>-m<span class="w"> </span>svn+https
 
-<span class="go"># Create a jail from a snapshot</span>
-<span class="go">$ poudriere -j 10amd64 -v 10.0-RELEASE -a amd64</span>
-<span class="go"># Create a head jail from src</span>
-<span class="go">$ poudriere -j head-amd64 -v head -a amd64 -m svn+https</span>
+<span class="gp"># </span>Create<span class="w"> </span>a<span class="w"> </span>jail<span class="w"> </span>from<span class="w"> </span>a<span class="w"> </span>snapshot
+<span class="gp">$ </span>poudriere<span class="w"> </span>-j<span class="w"> </span>10amd64<span class="w"> </span>-v<span class="w"> </span><span class="m">10</span>.0-RELEASE<span class="w"> </span>-a<span class="w"> </span>amd64
+<span class="gp"># </span>Create<span class="w"> </span>a<span class="w"> </span>head<span class="w"> </span>jail<span class="w"> </span>from<span class="w"> </span>src
+<span class="gp">$ </span>poudriere<span class="w"> </span>-j<span class="w"> </span>head-amd64<span class="w"> </span>-v<span class="w"> </span>head<span class="w"> </span>-a<span class="w"> </span>amd64<span class="w"> </span>-m<span class="w"> </span>svn+https
 
-<span class="go"># Create a list of port origins (cat/port), 1 per line.</span>
-<span class="go">$ vim /usr/local/etc/poudriere.d/ports.list</span>
+<span class="gp"># </span>Create<span class="w"> </span>a<span class="w"> </span>list<span class="w"> </span>of<span class="w"> </span>port<span class="w"> </span>origins<span class="w"> </span><span class="o">(</span>cat/port<span class="o">)</span>,<span class="w"> </span><span class="m">1</span><span class="w"> </span>per<span class="w"> </span>line.
+<span class="gp">$ </span>vim<span class="w"> </span>/usr/local/etc/poudriere.d/ports.list
 
-<span class="go"># Create a public/private keypair for the repository</span>
-<span class="go">$ cd /etc/ssl</span>
-<span class="go">$ openssl genrsa -out repo.key 2048</span>
-<span class="go">$ chmod 0400 repo.key</span>
-<span class="go">$ openssl rsa -in repo.key -out repo.pub -pubout</span>
-<span class="go"># Configure poudriere to use your public key</span>
-<span class="go">$ echo &quot;PKG_REPO_SIGNING_KEY=/etc/ssl/repo.key&quot; &gt;&gt; /usr/local/etc/poudriere.conf</span>
+<span class="gp"># </span>Create<span class="w"> </span>a<span class="w"> </span>public/private<span class="w"> </span>keypair<span class="w"> </span><span class="k">for</span><span class="w"> </span>the<span class="w"> </span>repository
+<span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span>/etc/ssl
+<span class="gp">$ </span>openssl<span class="w"> </span>genrsa<span class="w"> </span>-out<span class="w"> </span>repo.key<span class="w"> </span><span class="m">2048</span>
+<span class="gp">$ </span>chmod<span class="w"> </span><span class="m">0400</span><span class="w"> </span>repo.key
+<span class="gp">$ </span>openssl<span class="w"> </span>rsa<span class="w"> </span>-in<span class="w"> </span>repo.key<span class="w"> </span>-out<span class="w"> </span>repo.pub<span class="w"> </span>-pubout
+<span class="gp"># </span>Configure<span class="w"> </span>poudriere<span class="w"> </span>to<span class="w"> </span>use<span class="w"> </span>your<span class="w"> </span>public<span class="w"> </span>key
+<span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;PKG_REPO_SIGNING_KEY=/etc/ssl/repo.key&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>/usr/local/etc/poudriere.conf
 
-<span class="go"># Create a make.conf</span>
-<span class="go">$ echo &quot;WITH_PKGNG=yes&quot; &gt;&gt; /usr/local/etc/poudriere.d/make.conf</span>
+<span class="gp"># </span>Create<span class="w"> </span>a<span class="w"> </span>make.conf
+<span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;WITH_PKGNG=yes&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>/usr/local/etc/poudriere.d/make.conf
 
-<span class="go"># Configure options for the build</span>
-<span class="go">$ poudriere options -f /usr/local/etc/poudriere.d/ports.list</span>
+<span class="gp"># </span>Configure<span class="w"> </span>options<span class="w"> </span><span class="k">for</span><span class="w"> </span>the<span class="w"> </span>build
+<span class="gp">$ </span>poudriere<span class="w"> </span>options<span class="w"> </span>-f<span class="w"> </span>/usr/local/etc/poudriere.d/ports.list
 
-<span class="go"># Build packages</span>
-<span class="go">$ poudriere bulk -j 91amd64 -f /usr/local/etc/poudriere.d/ports.list</span>
-</pre></div>
-
+<span class="gp"># </span>Build<span class="w"> </span>packages
+<span class="gp">$ </span>poudriere<span class="w"> </span>bulk<span class="w"> </span>-j<span class="w"> </span>91amd64<span class="w"> </span>-f<span class="w"> </span>/usr/local/etc/poudriere.d/ports.list
+</code></pre></div>
 
 <p>If you need to build multiple sets, then you should use the <code>-z</code> flag when using &ldquo;options&rdquo;, and <code>bulk</code> commands, and also setup a <em>SET-make.conf</em> in <em>/usr/local/etc/poudriere.d</em> with any set-specific configuration.</p>
 <p>The official Poudriere site has a guide for <a href="https://github.com/freebsd/poudriere/wiki/pkg_repos">creating and maintaining repositories</a>. The manual page is also online <a href="https://github.com/freebsd/poudriere/wiki/poudriere.8">here</a>.</p>
@@ -211,22 +210,21 @@
 <p>The official FreeBSD package URL uses an <a href="https://en.wikipedia.org/wiki/SRV_record">SRV</a> DNS record to advertise which mirrors are available, but otherwise is just plain HTTP. If your network is completely internal then there is not much to do for deployment. All that is needed is an internal FTP or HTTP server to serve up the package repository. The servers I host are spread out all over the world and are not in one network. At first I tried using just one HTTP server for serving the packages, but quickly found that updating all of them at once would severely slow everything down. If you have a large pipe this may still be an option. I ended up using <a href="https://aws.amazon.com/s3/">Amazon S3</a> and have had a much better experience. I have a simple wrapper for my build that runs Poudriere and then runs <a href="https://www.freshports.org/net/py-s3cmd/">s3sync</a> to upload the packages. I host 5GB of package sets on there and update servers weekly. This comes out to just a few dollars or less a month for updating my 20 servers.</p>
 <p>To configure a server to use your repository, create a <em>/usr/local/etc/pkg/repos/MYREPO.conf</em> file, and also place your repository public key in <em>/usr/local/etc/pkg/repos/MYREPO.pem</em>:</p>
 <h4 class="code_title">/usr/local/etc/pkg/repos/MYREPO.conf</h4>
-<div class="codehilite"><pre><span class="l-Scalar-Plain">MYREPO</span><span class="p-Indicator">:</span> <span class="p-Indicator">{</span>
-  <span class="nv">url</span><span class="p-Indicator">:</span>     <span class="s">&quot;http://url.to.your.repository/${ABI}&quot;</span><span class="p-Indicator">,</span>
-  <span class="nv">enabled</span><span class="p-Indicator">:</span>  <span class="nv">true</span><span class="p-Indicator">,</span>
-  <span class="nv">signature_type</span><span class="p-Indicator">:</span> <span class="s">&quot;pubkey&quot;</span><span class="p-Indicator">,</span>
-  <span class="nv">pubkey</span><span class="p-Indicator">:</span>  <span class="s">&quot;/usr/local/etc/pkg/repos/MYREPO.pem&quot;</span>
-<span class="p-Indicator">}</span>
+<div class="codehilite"><pre><span></span><code><span class="nt">MYREPO</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
+<span class="nt">  url</span><span class="p">:</span><span class="w">     </span><span class="s">&quot;http://url.to.your.repository/${ABI}&quot;</span><span class="p p-Indicator">,</span>
+<span class="nt">  enabled</span><span class="p">:</span><span class="w">  </span><span class="nv">true</span><span class="p p-Indicator">,</span>
+<span class="nt">  signature_type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;pubkey&quot;</span><span class="p p-Indicator">,</span>
+<span class="nt">  pubkey</span><span class="p">:</span><span class="w">  </span><span class="s">&quot;/usr/local/etc/pkg/repos/MYREPO.pem&quot;</span>
+<span class="p p-Indicator">}</span>
 
 <span class="c1"># Optionally disable the FreeBSD repo.</span>
-<span class="l-Scalar-Plain">FreeBSD</span><span class="p-Indicator">:</span> <span class="p-Indicator">{</span>
-  <span class="nv">enabled</span><span class="p-Indicator">:</span>  <span class="nv">false</span>
-<span class="p-Indicator">}</span>
-</pre></div>
-
+<span class="nt">FreeBSD</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
+<span class="nt">  enabled</span><span class="p">:</span><span class="w">  </span><span class="nv">false</span>
+<span class="p p-Indicator">}</span>
+</code></pre></div>
 
 <p>This configuration requires setup of ABI symlinks in the repository. This is a one-time operation. It allows you to use the same repository configuration on all servers without changing which release and arch it uses. Pkg will change the value of ABI when it fetches packages. It should look something like this:</p>
-<div class="codehilite"><pre><span class="go"># ls -al /usr/local/poudriere/data/packages</span>
+<div class="codehilite"><pre><span></span><code><span class="gp"># </span>ls<span class="w"> </span>-al<span class="w"> </span>/usr/local/poudriere/data/packages
 <span class="go">total 19</span>
 <span class="go">drwxr-xr-x   7 root  wheel  15 Jul 11  2013 ./</span>
 <span class="go">drwxr-x--x  26 root  wheel  32 Mar  2 01:13 ../</span>
@@ -236,8 +234,7 @@
 <span class="go">lrwxr-xr-x   1 root  wheel   7 Jul  8  2013 freebsd:10:x86:64@ -&gt; 10amd64</span>
 <span class="go">lrwxr-xr-x   1 root  wheel   6 Jan 26  2013 freebsd:8:x86:32@ -&gt; 83i386</span>
 <span class="go">lrwxr-xr-x   1 root  wheel   7 Jan 26  2013 freebsd:8:x86:64@ -&gt; 83amd64</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>As for keeping servers up-to-date, since I am a Ports committer and also a Pkg developer, I like to observe all upgrades that I can to find any issues. I&rsquo;m also just paranoid and like to make sure upgrades go smoothly, so I manually run <code>pkg upgrade</code> on my servers and don&rsquo;t use an automated crontab for it. My systems have a lot of applications built outside of ports, so I must save shared libraries until those applications can be rebuilt. This is similar to what portupgrade and portmaster with the <code>-p</code> flag do. An example of this can found on my <a href="https://gist.github.com/bdrewery/3099160">github</a>. Manually running my upgrade script  is not a problem for me since I only maintain a handful of servers. However, Pkg is supported by <a href="https://forge.puppetlabs.com/zleslie/pkgng">puppet</a>, <a href="http://docs.saltstack.com/ref/modules/all/salt.modules.pkgng.html">salt</a> and <a href="https://github.com/ansible/ansible/pull/2883">ansible</a>. Do be warned though that some manual intervention is still required with package upgrades occasionally. This usually only occurs anymore when the origin of a package changes and requires running <code>pkg set -o old/origin:new/origin</code>. The most common case is when something like Perl is updated. You can detect this case and other cases of conflicting packages in a script by running <code>pkg upgrade -Fy</code> which will list all conflicting packages in the upgrade. The ports framework and Pkg currently do not have a means to handle replaced packages automatically but eventually will. These cases are still currently documented in the <em>/usr/ports/UPDATING</em> file. You can keep an eye on this file in <a href="http://svnweb.freebsd.org/ports/head/UPDATING?view=co">ports svnweb</a>.</p>
 <p>Pkg discussion takes place on the <a href="http://lists.freebsd.org/mailman/listinfo/freebsd-pkg">freebsd-pkg</a> mailing list and on IRC in #pkgng on Freenode. Poudriere discussion takes place on IRC in #poudriere on Freenode. Feel free to stop by with any questions or ideas you have.</p>
@@ -286,15 +283,15 @@
   </div>
   <footer class="footer">
     
-    <p class="text-right">Copyright &copy; 2013-2015 Bryan Drewery</p></footer>
+    <p class="text-right">Copyright &copy; 2013-2024 Bryan Drewery</p></footer>
 </div>
 
 
     
 
 
-    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.2/js/bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
 
 <script type="text/javascript">

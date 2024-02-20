@@ -6,15 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Bootstrap -->
-    <link href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.2/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="/static/blog.css"></link>
 <link rel="stylesheet" href="/static/pygments.css"></link>
 
 
-<!--[if lt IE 9]>
-      <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.min.js"></script>
-      <script src="//cdnjs.cloudflare.com/ajax/libs/respond.js/1.4.2/respond.min.js"></script>
-<![endif]-->
+    <!--[if lt IE 9]>
+          <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
+          <script src="//cdnjs.cloudflare.com/ajax/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
 
 <link rel="shortcut icon" href="/static/favicon.ico">
 <link href="/recent.atom"
@@ -123,89 +123,83 @@
       </ul>
     </div>
   </div>
-  <p>To simplify server management I create &ldquo;meta&rdquo; packages in FreeBSD ports that can generate a package with only dependencies on other packages. This allows to me to just install this 1 package on the target server and have it pull in all of the packages that I want on there. I assign each server specific &ldquo;roles&rdquo; and only install 1 or 2 packages per server depending on which roles they fulfill. The roles may be one of &ldquo;dev&rdquo;, &ldquo;web&rdquo;, &ldquo;ports-dev&rdquo;, &ldquo;jail&rdquo;, etc. This ensures that all servers fulfilling specific roles will always have the proper packages installed. For some applications, I use a dedicated jail with a meta package that only pulls in the required dependencies for that application to run. For instance, on a PHP application jail, the meta package may pull in nginx, php, eaccelerator, git, etc.
-<!--more--></p>
+  <p>To simplify server management I create &ldquo;meta&rdquo; packages in FreeBSD ports that can generate a package with only dependencies on other packages. This allows to me to just install this 1 package on the target server and have it pull in all of the packages that I want on there. I assign each server specific &ldquo;roles&rdquo; and only install 1 or 2 packages per server depending on which roles they fulfill. The roles may be one of &ldquo;dev&rdquo;, &ldquo;web&rdquo;, &ldquo;ports-dev&rdquo;, &ldquo;jail&rdquo;, etc. This ensures that all servers fulfilling specific roles will always have the proper packages installed. For some applications, I use a dedicated jail with a meta package that only pulls in the required dependencies for that application to run. For instance, on a PHP application jail, the meta package may pull in nginx, php, eaccelerator, git, etc.</p>
+<!--more-->
+
 <h2 id="packages-are-created-from-ports">Packages are created from ports</h2>
 <p>To create meta packages, define a port that requires the actual ports that should be installed. Then build packages for those meta ports.</p>
 <h3 id="dev-meta-port">dev-meta port</h3>
 <p>This meta port will install <em>git</em>, <em>cscope</em> and <em>vim</em>. Which dependencies those pull in do not matter here.</p>
 <h4 class="code_title">/usr/ports/local/dev-meta/Makefile</h4>
-<div class="codehilite"><pre><span class="nv">PORTNAME</span><span class="o">=</span>	<span class="nb">local</span>-dev-meta
-<span class="nv">PORTVERSION</span><span class="o">=</span>	20130719
-<span class="nv">CATEGORIES</span><span class="o">=</span>	<span class="nb">local</span>
-<span class="nv">MASTER_SITES</span><span class="o">=</span>	<span class="c"># none</span>
-<span class="nv">DISTFILES</span><span class="o">=</span>	<span class="c"># none</span>
-<span class="nv">EXTRACT_ONLY</span><span class="o">=</span>	<span class="c"># none</span>
+<div class="codehilite"><pre><span></span><code><span class="nv">PORTNAME</span><span class="o">=</span><span class="w">	</span>local-dev-meta
+<span class="nv">PORTVERSION</span><span class="o">=</span><span class="w">	</span><span class="m">20130719</span>
+<span class="nv">CATEGORIES</span><span class="o">=</span><span class="w">	</span><span class="nb">local</span>
+<span class="nv">MASTER_SITES</span><span class="o">=</span><span class="w">	</span><span class="c1"># none</span>
+<span class="nv">DISTFILES</span><span class="o">=</span><span class="w">	</span><span class="c1"># none</span>
+<span class="nv">EXTRACT_ONLY</span><span class="o">=</span><span class="w">	</span><span class="c1"># none</span>
 
-<span class="nv">MAINTAINER</span><span class="o">=</span>	<span class="nb">local</span>@localdomain.com
-<span class="nv">COMMENT</span><span class="o">=</span>	Meta port <span class="k">for</span> dev packages
+<span class="nv">MAINTAINER</span><span class="o">=</span><span class="w">	</span>local@localdomain.com
+<span class="nv">COMMENT</span><span class="o">=</span><span class="w">	</span>Meta<span class="w"> </span>port<span class="w"> </span><span class="k">for</span><span class="w"> </span>dev<span class="w"> </span>packages
 
-<span class="nv">NO_BUILD</span><span class="o">=</span>	yes
-<span class="nv">NO_WRKSUBDIR</span><span class="o">=</span>	yes
+<span class="nv">NO_BUILD</span><span class="o">=</span><span class="w">	</span>yes
+<span class="nv">NO_WRKSUBDIR</span><span class="o">=</span><span class="w">	</span>yes
 
-<span class="nv">RUN_DEPENDS</span><span class="o">+=</span>	git&gt;0:<span class="si">${</span><span class="nv">PORTSDIR</span><span class="si">}</span>/devel/git
-<span class="nv">RUN_DEPENDS</span><span class="o">+=</span>	cscope&gt;0:<span class="si">${</span><span class="nv">PORTSDIR</span><span class="si">}</span>/devel/cscope
-<span class="nv">RUN_DEPENDS</span><span class="o">+=</span>	vim-lite&gt;0:<span class="si">${</span><span class="nv">PORTSDIR</span><span class="si">}</span>/editors/vim-lite
+<span class="nv">RUN_DEPENDS</span><span class="o">+=</span><span class="w">	</span>git&gt;0:<span class="si">${</span><span class="nv">PORTSDIR</span><span class="si">}</span>/devel/git
+<span class="nv">RUN_DEPENDS</span><span class="o">+=</span><span class="w">	</span>cscope&gt;0:<span class="si">${</span><span class="nv">PORTSDIR</span><span class="si">}</span>/devel/cscope
+<span class="nv">RUN_DEPENDS</span><span class="o">+=</span><span class="w">	</span>vim-lite&gt;0:<span class="si">${</span><span class="nv">PORTSDIR</span><span class="si">}</span>/editors/vim-lite
 
-<span class="nf">do-install</span><span class="o">:</span> <span class="n">build</span>
-	@<span class="si">${</span><span class="nv">DO_NADA</span><span class="si">}</span>
+<span class="nf">do-install</span><span class="o">:</span><span class="w"> </span><span class="n">build</span>
+<span class="w">	</span>@<span class="si">${</span><span class="nv">DO_NADA</span><span class="si">}</span>
 
 <span class="cp">.include &lt;bsd.port.mk&gt;</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Note the <em>RUN_DEPENDS</em> line is depending on <em>package names</em>, not <em>binary names</em>. Any version will satisfy the dependency.</p>
 <h4 class="code_title">/usr/ports/local/dev-meta/pkg-descr</h4>
-<div class="codehilite"><pre>Development meta port
-</pre></div>
-
+<div class="codehilite"><pre><span></span><code>Development meta port
+</code></pre></div>
 
 <p>The <em>local</em> category must be defined.</p>
 <h4 class="code_title">/etc/make.conf</h4>
-<div class="codehilite"><pre><span class="nv">VALID_CATEGORIES</span><span class="o">+=</span>	<span class="nb">local</span>
-</pre></div>
-
+<div class="codehilite"><pre><span></span><code><span class="nv">VALID_CATEGORIES</span><span class="o">+=</span><span class="w">	</span><span class="nb">local</span>
+</code></pre></div>
 
 <h3 id="building-packages-with-poudriere">Building packages with Poudriere</h3>
 <p><a href="https://fossil.etoilebsd.net/poudriere">Poudriere</a> is a tool to build and test packages for FreeBSD. There is a detailed guide on <a href="https://fossil.etoilebsd.net/poudriere/doc/trunk/doc/pkgng_repos.wiki">creating pkgng repositories</a> on the poudriere site, so I will only cover it briefly here.</p>
 <p>Install poudriere on your build machine:</p>
-<div class="codehilite"><pre><span class="gp">root@build#</span> make -C /usr/ports/ports-mgmt/poudriere install clean
-</pre></div>
-
+<div class="codehilite"><pre><span></span><code><span class="gp">root@build# </span>make<span class="w"> </span>-C<span class="w"> </span>/usr/ports/ports-mgmt/poudriere<span class="w"> </span>install<span class="w"> </span>clean
+</code></pre></div>
 
 <p>Configure poudriere:</p>
-<div class="codehilite"><pre><span class="gp">root@build#</span> cat &gt;&gt; /usr/local/etc/poudriere.conf
+<div class="codehilite"><pre><span></span><code><span class="gp">root@build# </span>cat<span class="w"> </span>&gt;&gt;<span class="w"> </span>/usr/local/etc/poudriere.conf
 <span class="go">BASEFS=/poudriere</span>
 <span class="go">ZPOOL=tank</span>
-<span class="go"># Directory where the CCACHE_DIR is in the host</span>
+<span class="gp"># </span>Directory<span class="w"> </span>where<span class="w"> </span>the<span class="w"> </span>CCACHE_DIR<span class="w"> </span>is<span class="w"> </span><span class="k">in</span><span class="w"> </span>the<span class="w"> </span>host
 <span class="go">CCACHE_DIR=/usr/ccache</span>
-<span class="go"># Directory to store distfiles on the host</span>
+<span class="gp"># </span>Directory<span class="w"> </span>to<span class="w"> </span>store<span class="w"> </span>distfiles<span class="w"> </span>on<span class="w"> </span>the<span class="w"> </span>host
 <span class="go">DISTFILES_CACHE=/mnt/distfiles</span>
 <span class="go">^D</span>
-<span class="gp">root@build#</span> mkdir /usr/local/etc/poudriere.d
-<span class="gp">root@build#</span> cat &gt;&gt; /usr/local/etc/poudriere.d/make.conf
+<span class="gp">root@build# </span>mkdir<span class="w"> </span>/usr/local/etc/poudriere.d
+<span class="gp">root@build# </span>cat<span class="w"> </span>&gt;&gt;<span class="w"> </span>/usr/local/etc/poudriere.d/make.conf
 <span class="go">WITH_PKGNG=	yes</span>
 <span class="go">^D</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Create a jail and import your existing <em>/usr/ports</em> tree as <em>system</em>:</p>
-<div class="codehilite"><pre><span class="go"># Create jail</span>
-<span class="gp">root@build#</span> poudriere jail -c -j 83amd64 -v 8.3-RELEASE -a amd64
+<div class="codehilite"><pre><span></span><code><span class="gp"># </span>Create<span class="w"> </span>jail
+<span class="gp">root@build# </span>poudriere<span class="w"> </span>jail<span class="w"> </span>-c<span class="w"> </span>-j<span class="w"> </span>83amd64<span class="w"> </span>-v<span class="w"> </span><span class="m">8</span>.3-RELEASE<span class="w"> </span>-a<span class="w"> </span>amd64
 <span class="go">...</span>
-<span class="go"># Add system&#39;s /usr/ports into poudriere</span>
-<span class="gp">root@build#</span> poudriere ports -c -F -f none -M /usr/ports -p system
+<span class="gp"># </span>Add<span class="w"> </span>system<span class="err">&#39;</span>s<span class="w"> </span>/usr/ports<span class="w"> </span>into<span class="w"> </span>poudriere
+<span class="gp">root@build# </span>poudriere<span class="w"> </span>ports<span class="w"> </span>-c<span class="w"> </span>-F<span class="w"> </span>-f<span class="w"> </span>none<span class="w"> </span>-M<span class="w"> </span>/usr/ports<span class="w"> </span>-p<span class="w"> </span>system
 <span class="go">...</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Pick options for your meta package and dependencies:</p>
-<div class="codehilite"><pre><span class="gp">root@build#</span> poudriere options -p system <span class="nb">local</span>/dev-meta
-</pre></div>
-
+<div class="codehilite"><pre><span></span><code><span class="gp">root@build# </span>poudriere<span class="w"> </span>options<span class="w"> </span>-p<span class="w"> </span>system<span class="w"> </span>local/dev-meta
+</code></pre></div>
 
 <p>Now build the packages from the meta port using the <em>system</em> ports tree:</p>
-<div class="codehilite"><pre><span class="gp">root@build#</span> poudriere bulk -j 83amd64 -p system <span class="nb">local</span>/dev-meta
+<div class="codehilite"><pre><span></span><code><span class="gp">root@build# </span>poudriere<span class="w"> </span>bulk<span class="w"> </span>-j<span class="w"> </span>83amd64<span class="w"> </span>-p<span class="w"> </span>system<span class="w"> </span>local/dev-meta
 <span class="go">====&gt;&gt; Creating the reference jail... done</span>
 <span class="go">====&gt;&gt; Mounting system devices for 83amd64-system</span>
 <span class="go">====&gt;&gt; Mounting ports/packages/distfiles</span>
@@ -231,34 +225,31 @@
 
 <span class="go">====&gt;&gt; [83amd64-system] 53 packages built, 0 failures, 0 ignored, 0 skipped</span>
 <span class="go">====&gt;&gt; Logs: /poudriere/data/logs/bulk/83amd64-system/2013-07-21_14h14m27s</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>The <em>/poudriere/data/packages/83amd64-system</em> directory now contains the pkgng repository that needs to be served. This can be done over NFS, Samba, HTTP, FTP, etc. It is best to serve the <em>/poudriere/data/packages</em> directory and create symlinks of the ABI name to the target. The ABI is a pkgng feature defined as <em>OS:REL:ARCH:BITS</em>. For instance, this build would be <em>freebsd:8:x86:64</em>.</p>
-<div class="codehilite"><pre><span class="gp">root@build#</span> ln -s 83amd64-system /poudriere/data/packages/freebsd:8:x86:64
-</pre></div>
-
+<div class="codehilite"><pre><span></span><code><span class="gp">root@build# </span>ln<span class="w"> </span>-s<span class="w"> </span>83amd64-system<span class="w"> </span>/poudriere/data/packages/freebsd:8:x86:64
+</code></pre></div>
 
 <p>The repository is now ready for use on the target servers.</p>
 <h2 id="role-based-servers-with-packages">Role based servers with packages</h2>
 <p>On the target server, the appropriate meta packages just need to be installed now.</p>
 <p>First bootstrap the system with pkg if needed.</p>
-<div class="codehilite"><pre><span class="gp">root@dev#</span> mkdir -p /usr/local/etc
-<span class="gp">root@dev#</span> <span class="nb">echo</span> <span class="s1">&#39;PACKAGESITE=http://packages.domain.com/${ABI}&#39;</span> &gt; /usr/local/etc/pkg.conf
-<span class="gp">root@dev#</span> pkg -v
+<div class="codehilite"><pre><span></span><code><span class="gp">root@dev# </span>mkdir<span class="w"> </span>-p<span class="w"> </span>/usr/local/etc
+<span class="gp">root@dev# </span><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;PACKAGESITE=http://packages.domain.com/${ABI}&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>/usr/local/etc/pkg.conf
+<span class="gp">root@dev# </span>pkg<span class="w"> </span>-v
 <span class="go">The package management tool is not yet installed on your system.</span>
 <span class="go">Do you want to fetch and install it now? [y/N]: y</span>
 <span class="go">Bootstrapping pkg please wait</span>
 <span class="go">Installing pkg-1.1.4... done</span>
 <span class="go">If you are upgrading from the old package format, first run:</span>
 
-<span class="go">  # pkg2ng</span>
+<span class="gp">  # </span>pkg2ng
 <span class="go">1.1.4</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Now the <code>local/dev-meta</code> package can be installed:</p>
-<div class="codehilite"><pre><span class="gp">root@dev#</span> pkg install <span class="nb">local</span>/dev-meta
+<div class="codehilite"><pre><span></span><code><span class="gp">root@dev# </span>pkg<span class="w"> </span>install<span class="w"> </span>local/dev-meta
 <span class="go">digests.txz                                                        100%   57KB  57.1KB/s  57.1KB/s   00:00</span>
 <span class="go">packagesite.txz                                                    100%  323KB 323.3KB/s 323.3KB/s   00:00</span>
 <span class="go">Incremental update completed, 0 packages processed:</span>
@@ -314,15 +305,13 @@
 
 <span class="go">Proceed with installing packages [y/N]: y</span>
 <span class="go">...</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>Only 2 packages were directly installed, so only those 2 show as non-automatic and will not be removed by <code>pkg autoremove</code>:</p>
-<div class="codehilite"><pre><span class="gp">root@dev#</span> pkg query -e <span class="s1">&#39;%a = 0&#39;</span> <span class="s1">&#39;%o&#39;</span>
+<div class="codehilite"><pre><span></span><code><span class="gp">root@dev# </span>pkg<span class="w"> </span>query<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;%a = 0&#39;</span><span class="w"> </span><span class="s1">&#39;%o&#39;</span>
 <span class="go">ports-mgmt/pkg</span>
 <span class="go">local/dev-meta</span>
-</pre></div>
-
+</code></pre></div>
 
 <p>This simplifies maintenance of the server and ensures all servers using this meta package will have the same packages installed on them. When needing to add or remove a dependency from the meta package, just update the <em>/usr/ports/local/dev-meta/Makefile</em> on the build server, bump the <em>PORTREVISION</em> or <em>PORTVERSION</em> and then rebuild with <code>poudriere bulk</code>. Once that is completed, run <code>pkg upgrade</code> and <code>pkg autoremove</code> on the target servers. This will install new dependencies, upgrading existing, and then remove any that are no longer needed on on that server.</p>
 </div>
@@ -370,15 +359,15 @@
   </div>
   <footer class="footer">
     
-    <p class="text-right">Copyright &copy; 2013-2015 Bryan Drewery</p></footer>
+    <p class="text-right">Copyright &copy; 2013-2024 Bryan Drewery</p></footer>
 </div>
 
 
     
 
 
-    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.2/js/bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
 
 <script type="text/javascript">
